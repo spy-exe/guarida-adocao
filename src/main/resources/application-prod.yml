@@ -1,0 +1,20 @@
+spring:
+  datasource:
+    url: ${GUARIDA_DB_URL}
+    username: ${GUARIDA_DB_USUARIO}
+    password: ${GUARIDA_DB_SENHA}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+guarida:
+  jwt:
+    segredo: ${GUARIDA_JWT_SEGREDO}
+
+logging:
+  level:
+    root: WARN
+    br.com.ricardofigueiredo.guarida: INFO

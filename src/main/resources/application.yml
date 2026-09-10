@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: guarida
+  datasource:
+    url: jdbc:h2:mem:guarida;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+  jackson:
+    default-property-inclusion: non_null
+
+server:
+  port: 8080
+  error:
+    include-message: never
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+
+guarida:
+  jwt:
+    segredo: ${GUARIDA_JWT_SEGREDO:segredo-de-desenvolvimento-nao-usar-fora-da-maquina-local-0123456789}
+    validade-minutos: 240
+
+logging:
+  level:
+    br.com.ricardofigueiredo.guarida: INFO
