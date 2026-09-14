@@ -52,7 +52,7 @@ public class SegurancaConfig {
                         .requestMatchers(SEMPRE_PUBLICAS).permitAll()
                         // o catalogo e a ficha de cada animal ficam abertos
                         .requestMatchers(HttpMethod.GET, "/api/v1/animais", "/api/v1/animais/*",
-                                "/api/v1/animais/*/eventos", "/api/v1/catalogo/**").permitAll()
+                                "/api/v1/animais/*/eventos", "/api/v1/animais/*/foto").permitAll()
                         // qualquer pessoa pode se candidatar a adotar
                         .requestMatchers(HttpMethod.POST, "/api/v1/animais/*/candidaturas").permitAll()
                         .anyRequest().authenticated())

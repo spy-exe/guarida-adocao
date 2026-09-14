@@ -26,7 +26,7 @@ class ManipuladorDeExcecoesTest {
     private final ManipuladorDeExcecoes manipulador = new ManipuladorDeExcecoes();
 
     @Test
-    @DisplayName("erro de validacao vira 400 com o mapa de campos, incluindo os erros do objeto inteiro")
+    @DisplayName("erro de validação vira 400 com o mapa de campos, incluindo os erros do objeto inteiro")
     void validacaoViraQuatrocentos() throws Exception {
         BindingResult resultado = new BeanPropertyBindingResult(new Object(), "animal");
         resultado.reject("semCampo", "faltou o corpo inteiro");
@@ -55,7 +55,7 @@ class ManipuladorDeExcecoesTest {
     }
 
     @Test
-    @DisplayName("corpo ilegivel vira 400, e nao erro do servidor")
+    @DisplayName("corpo ilegivel vira 400, e não erro do servidor")
     void corpoIlegivelViraQuatrocentos() {
         ProblemDetail problema =
                 manipulador.tratarCorpoIlegivel(new HttpMessageNotReadableException("quebrado", null, null));
@@ -65,32 +65,42 @@ class ManipuladorDeExcecoesTest {
     }
 
     @Test
+    @DisplayName("foto acima do limite do servidor vira 413 com o tamanho aceito")
+    void arquivoGrandeViraQuatrocentosETreze() {
+        ProblemDetail problema = manipulador.tratarArquivoGrande(
+                new org.springframework.web.multipart.MaxUploadSizeExceededException(3_000_000));
+
+        assertThat(problema.getStatus()).isEqualTo(HttpStatus.PAYLOAD_TOO_LARGE.value());
+        assertThat(problema.getDetail()).contains("2 MB");
+    }
+
+    @Test
     @DisplayName("recurso ausente vira 404 com a mensagem original")
     void naoEncontradoViraQuatrocentosEQuatro() {
         ProblemDetail problema =
-                manipulador.tratarNaoEncontrado(new RecursoNaoEncontradoException("nao achei"));
+                manipulador.tratarNaoEncontrado(new RecursoNaoEncontradoException("não achei"));
 
         assertThat(problema.getStatus()).isEqualTo(HttpStatus.NOT_FOUND.value());
-        assertThat(problema.getDetail()).isEqualTo("nao achei");
+        assertThat(problema.getDetail()).isEqualTo("não achei");
     }
 
     @Test
     @DisplayName("regra de negocio vira 422")
     void regraDeNegocioViraQuatrocentosEVinteEDois() {
         ProblemDetail problema =
-                manipulador.tratarRegraDeNegocio(new RegraDeNegocioException("nao pode"));
+                manipulador.tratarRegraDeNegocio(new RegraDeNegocioException("não pode"));
 
         assertThat(problema.getStatus()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.value());
-        assertThat(problema.getTitle()).isEqualTo("Operacao nao permitida");
+        assertThat(problema.getTitle()).isEqualTo("Operação não permitida");
     }
 
     @Test
     @DisplayName("conflito vira 409")
     void conflitoViraQuatrocentosENove() {
-        ProblemDetail problema = manipulador.tratarConflito(new ConflitoException("ja existe"));
+        ProblemDetail problema = manipulador.tratarConflito(new ConflitoException("já existe"));
 
         assertThat(problema.getStatus()).isEqualTo(HttpStatus.CONFLICT.value());
-        assertThat(problema.getDetail()).isEqualTo("ja existe");
+        assertThat(problema.getDetail()).isEqualTo("já existe");
     }
 
     @Test
@@ -99,7 +109,7 @@ class ManipuladorDeExcecoesTest {
         ProblemDetail problema = manipulador.tratarCredenciais(new BadCredentialsException("senha ruim"));
 
         assertThat(problema.getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
-        assertThat(problema.getDetail()).isEqualTo("E-mail ou senha nao conferem.");
+        assertThat(problema.getDetail()).isEqualTo("E-mail ou senha não conferem.");
     }
 
     private MethodArgumentNotValidException excecaoDeValidacao(BindingResult resultado) throws Exception {

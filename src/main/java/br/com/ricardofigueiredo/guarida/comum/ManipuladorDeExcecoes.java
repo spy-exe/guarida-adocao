@@ -12,6 +12,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -33,32 +35,44 @@ public class ManipuladorDeExcecoes {
         excecao.getBindingResult().getGlobalErrors()
                 .forEach(erro -> campos.putIfAbsent(erro.getObjectName(), erro.getDefaultMessage()));
 
-        ProblemDetail problema = montar(HttpStatus.BAD_REQUEST, "Requisicao invalida",
-                "Um ou mais campos nao passaram na validacao.");
+        ProblemDetail problema = montar(HttpStatus.BAD_REQUEST, "Requisição inválida",
+                "Um ou mais campos não passaram na validação.");
         problema.setProperty("campos", campos);
         return problema;
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ProblemDetail tratarTipoErrado(MethodArgumentTypeMismatchException excecao) {
-        return montar(HttpStatus.BAD_REQUEST, "Requisicao invalida",
-                "O valor informado em " + excecao.getName() + " nao serve para esse campo.");
+        return montar(HttpStatus.BAD_REQUEST, "Requisição inválida",
+                "O valor informado em " + excecao.getName() + " não serve para esse campo.");
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ProblemDetail tratarCorpoIlegivel(HttpMessageNotReadableException excecao) {
-        return montar(HttpStatus.BAD_REQUEST, "Requisicao invalida",
-                "O corpo da requisicao nao pode ser lido. Confira se e um JSON valido.");
+        return montar(HttpStatus.BAD_REQUEST, "Requisição inválida",
+                "O corpo da requisição não pode ser lido. Confira se e um JSON valido.");
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ProblemDetail tratarArquivoGrande(MaxUploadSizeExceededException excecao) {
+        return montar(HttpStatus.PAYLOAD_TOO_LARGE, "Arquivo grande demais",
+                "A foto pode ter no máximo 2 MB.");
+    }
+
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public ProblemDetail tratarArquivoAusente(MissingServletRequestPartException excecao) {
+        return montar(HttpStatus.BAD_REQUEST, "Requisição inválida",
+                "Envie o arquivo no campo " + excecao.getRequestPartName() + ".");
     }
 
     @ExceptionHandler(RecursoNaoEncontradoException.class)
     public ProblemDetail tratarNaoEncontrado(RecursoNaoEncontradoException excecao) {
-        return montar(HttpStatus.NOT_FOUND, "Recurso nao encontrado", excecao.getMessage());
+        return montar(HttpStatus.NOT_FOUND, "Recurso não encontrado", excecao.getMessage());
     }
 
     @ExceptionHandler(RegraDeNegocioException.class)
     public ProblemDetail tratarRegraDeNegocio(RegraDeNegocioException excecao) {
-        return montar(HttpStatus.UNPROCESSABLE_ENTITY, "Operacao nao permitida", excecao.getMessage());
+        return montar(HttpStatus.UNPROCESSABLE_ENTITY, "Operação não permitida", excecao.getMessage());
     }
 
     @ExceptionHandler(ConflitoException.class)
@@ -68,7 +82,7 @@ public class ManipuladorDeExcecoes {
 
     @ExceptionHandler(BadCredentialsException.class)
     public ProblemDetail tratarCredenciais(BadCredentialsException excecao) {
-        return montar(HttpStatus.UNAUTHORIZED, "Credenciais invalidas", "E-mail ou senha nao conferem.");
+        return montar(HttpStatus.UNAUTHORIZED, "Credenciais invalidas", "E-mail ou senha não conferem.");
     }
 
     private ProblemDetail montar(HttpStatus status, String titulo, String detalhe) {

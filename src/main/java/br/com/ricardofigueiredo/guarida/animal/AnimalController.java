@@ -6,6 +6,7 @@ import br.com.ricardofigueiredo.guarida.animal.dto.CadastrarAnimalRequest;
 import br.com.ricardofigueiredo.guarida.animal.dto.EventoResponse;
 import br.com.ricardofigueiredo.guarida.animal.dto.RegistrarEventoRequest;
 import br.com.ricardofigueiredo.guarida.comum.PaginaResponse;
+import br.com.ricardofigueiredo.guarida.foto.RespostasDeAnimal;
 import br.com.ricardofigueiredo.guarida.seguranca.AbrigoAutenticado;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -36,18 +37,20 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/v1/animais")
-@Tag(name = "Animais", description = "Cadastro, consulta, alteracao e exclusao de animais")
+@Tag(name = "Animais", description = "Cadastro, consulta, alteração e exclusão de animais")
 public class AnimalController {
 
     private final AnimalService animalService;
+    private final RespostasDeAnimal respostas;
 
-    public AnimalController(AnimalService animalService) {
+    public AnimalController(AnimalService animalService, RespostasDeAnimal respostas) {
         this.animalService = animalService;
+        this.respostas = respostas;
     }
 
     @PostMapping
     @Operation(summary = "Cadastra um animal",
-            description = "Exige token do abrigo. A entrada no abrigo ja entra na linha do tempo.")
+            description = "Exige token do abrigo. A entrada no abrigo já entra na linha do tempo.")
     public ResponseEntity<AnimalResponse> cadastrar(
             @AuthenticationPrincipal AbrigoAutenticado autenticado,
             @Valid @RequestBody CadastrarAnimalRequest requisicao) {
@@ -55,15 +58,15 @@ public class AnimalController {
         Animal animal = animalService.cadastrar(autenticado.getAbrigo(), requisicao);
         return ResponseEntity
                 .created(URI.create("/api/v1/animais/" + animal.getId()))
-                .body(AnimalResponse.de(animal));
+                .body(respostas.uma(animal));
     }
 
     @GetMapping
-    @Operation(summary = "Lista os animais do catalogo",
+    @Operation(summary = "Lista os animais do catálogo",
             description = """
-                    Aberto ao publico. Aceita filtro por especie, porte, sexo, situacao,
+                    Aberto ao público. Aceita filtro por espécie, porte, sexo, situação,
                     temperamento, cidade do abrigo, apenas filhotes e busca livre por nome,
-                    raca ou historia.""")
+                    raça ou história.""")
     public PaginaResponse<AnimalResponse> listar(
             @RequestParam(required = false) Especie especie,
             @RequestParam(required = false) Porte porte,
@@ -78,29 +81,29 @@ public class AnimalController {
 
         var filtro = new AnimalSpecs.Filtro(especie, porte, sexo, status, temperamento,
                 apenasFilhotes, cidade, busca);
-        return PaginaResponse.de(animalService.listarCatalogo(filtro, paginacao), AnimalResponse::de);
+        return respostas.pagina(animalService.listarCatalogo(filtro, paginacao));
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Consulta um animal pelo id", description = "Aberto ao publico.")
+    @Operation(summary = "Consulta um animal pelo id", description = "Aberto ao público.")
     public AnimalResponse buscar(@PathVariable Long id) {
-        return AnimalResponse.de(animalService.buscar(id));
+        return respostas.uma(animalService.buscar(id));
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Altera um animal", description = "Exige token, e so o abrigo dono consegue.")
+    @Operation(summary = "Altera um animal", description = "Exige token, e só o abrigo dono consegue.")
     public AnimalResponse atualizar(@AuthenticationPrincipal AbrigoAutenticado autenticado,
                                     @PathVariable Long id,
                                     @Valid @RequestBody AtualizarAnimalRequest requisicao) {
-        return AnimalResponse.de(animalService.atualizar(autenticado.getAbrigo(), id, requisicao));
+        return respostas.uma(animalService.atualizar(autenticado.getAbrigo(), id, requisicao));
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Exclui um animal",
             description = """
-                    Exige token, e so o abrigo dono consegue. Animal ja adotado nao pode ser
-                    excluido, porque o registro da adocao se perderia junto: nesse caso o
-                    caminho e registrar a devolucao.""")
+                    Exige token, e só o abrigo dono consegue. Animal já adotado não pode ser
+                    excluído, porque o registro da adoção se perderia junto: nesse caso o
+                    caminho e registrar a devolução.""")
     public ResponseEntity<Void> excluir(@AuthenticationPrincipal AbrigoAutenticado autenticado,
                                         @PathVariable Long id) {
         animalService.excluir(autenticado.getAbrigo(), id);
@@ -108,7 +111,7 @@ public class AnimalController {
     }
 
     @GetMapping("/{id}/eventos")
-    @Operation(summary = "Linha do tempo do animal", description = "Aberto ao publico.")
+    @Operation(summary = "Linha do tempo do animal", description = "Aberto ao público.")
     public List<EventoResponse> eventos(@PathVariable Long id) {
         return animalService.eventos(id).stream().map(EventoResponse::de).toList();
     }
@@ -129,13 +132,13 @@ public class AnimalController {
             description = "Para tratamento, quarentena ou qualquer motivo que peca pausa.")
     public AnimalResponse suspender(@AuthenticationPrincipal AbrigoAutenticado autenticado,
                                     @PathVariable Long id) {
-        return AnimalResponse.de(animalService.suspender(autenticado.getAbrigo(), id));
+        return respostas.uma(animalService.suspender(autenticado.getAbrigo(), id));
     }
 
     @PostMapping("/{id}/reativacao")
     @Operation(summary = "Devolve o animal para a vitrine")
     public AnimalResponse reativar(@AuthenticationPrincipal AbrigoAutenticado autenticado,
                                    @PathVariable Long id) {
-        return AnimalResponse.de(animalService.reativar(autenticado.getAbrigo(), id));
+        return respostas.uma(animalService.reativar(autenticado.getAbrigo(), id));
     }
 }

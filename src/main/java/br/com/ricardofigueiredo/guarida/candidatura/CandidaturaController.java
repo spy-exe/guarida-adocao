@@ -5,6 +5,7 @@ import br.com.ricardofigueiredo.guarida.candidatura.dto.CandidatarRequest;
 import br.com.ricardofigueiredo.guarida.candidatura.dto.CandidaturaResponse;
 import br.com.ricardofigueiredo.guarida.candidatura.dto.RecusarRequest;
 import br.com.ricardofigueiredo.guarida.comum.PaginaResponse;
+import br.com.ricardofigueiredo.guarida.foto.RespostasDeAnimal;
 import br.com.ricardofigueiredo.guarida.seguranca.AbrigoAutenticado;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,19 +25,21 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@Tag(name = "Candidaturas", description = "Pedidos de adocao e o que o abrigo faz com eles")
+@Tag(name = "Candidaturas", description = "Pedidos de adoção e o que o abrigo faz com eles")
 public class CandidaturaController {
 
     private final CandidaturaService candidaturaService;
+    private final RespostasDeAnimal respostas;
 
-    public CandidaturaController(CandidaturaService candidaturaService) {
+    public CandidaturaController(CandidaturaService candidaturaService, RespostasDeAnimal respostas) {
         this.candidaturaService = candidaturaService;
+        this.respostas = respostas;
     }
 
     @PostMapping("/api/v1/animais/{id}/candidaturas")
-    @Operation(summary = "Envia um pedido de adocao",
+    @Operation(summary = "Envia um pedido de adoção",
             description = """
-                    Aberto ao publico, sem cadastro. A resposta e um protocolo: confirma o
+                    Aberto ao público, sem cadastro. A resposta e um protocolo: confirma o
                     recebimento sem devolver os dados pessoais que acabaram de ser enviados.""")
     public ResponseEntity<CandidaturaResponse> candidatar(
             @PathVariable Long id, @Valid @RequestBody CandidatarRequest requisicao) {
@@ -68,7 +71,7 @@ public class CandidaturaController {
     }
 
     @PostMapping("/api/v1/candidaturas/{id}/analise")
-    @Operation(summary = "Marca a candidatura como em analise")
+    @Operation(summary = "Marca a candidatura como em análise")
     public CandidaturaResponse analisar(@AuthenticationPrincipal AbrigoAutenticado autenticado,
                                         @PathVariable Long id) {
         return CandidaturaResponse.de(candidaturaService.colocarEmAnalise(autenticado.getAbrigo(), id));
@@ -92,20 +95,19 @@ public class CandidaturaController {
     }
 
     @PostMapping("/api/v1/candidaturas/{id}/adocao")
-    @Operation(summary = "Conclui a adocao",
-            description = "So a partir de uma candidatura aprovada. O animal passa a constar como adotado.")
+    @Operation(summary = "Conclui a adoção",
+            description = "Só a partir de uma candidatura aprovada. O animal passa a constar como adotado.")
     public CandidaturaResponse concluir(@AuthenticationPrincipal AbrigoAutenticado autenticado,
                                         @PathVariable Long id) {
         return CandidaturaResponse.de(candidaturaService.concluirAdocao(autenticado.getAbrigo(), id));
     }
 
     @PostMapping("/api/v1/animais/{id}/devolucao")
-    @Operation(summary = "Registra a devolucao de um animal adotado",
+    @Operation(summary = "Registra a devolução de um animal adotado",
             description = "Fica na linha do tempo e o animal volta para a vitrine.")
     public AnimalResponse devolver(@AuthenticationPrincipal AbrigoAutenticado autenticado,
                                    @PathVariable Long id,
                                    @RequestParam(required = false) String motivo) {
-        return AnimalResponse.de(
-                candidaturaService.registrarDevolucao(autenticado.getAbrigo(), id, motivo));
+        return respostas.uma(candidaturaService.registrarDevolucao(autenticado.getAbrigo(), id, motivo));
     }
 }

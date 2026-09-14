@@ -9,6 +9,7 @@ import br.com.ricardofigueiredo.guarida.animal.StatusAnimal;
 import br.com.ricardofigueiredo.guarida.animal.Temperamento;
 import br.com.ricardofigueiredo.guarida.animal.dto.AnimalResponse;
 import br.com.ricardofigueiredo.guarida.comum.PaginaResponse;
+import br.com.ricardofigueiredo.guarida.foto.RespostasDeAnimal;
 import br.com.ricardofigueiredo.guarida.painel.dto.AdocoesNoMes;
 import br.com.ricardofigueiredo.guarida.painel.dto.FatiaDeEspecie;
 import br.com.ricardofigueiredo.guarida.painel.dto.ResumoDoAbrigo;
@@ -32,19 +33,22 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/v1/painel")
-@Tag(name = "Painel", description = "Visao do abrigo sobre o proprio acervo")
+@Tag(name = "Painel", description = "Visão do abrigo sobre o próprio acervo")
 public class PainelController {
 
     private final AnimalService animalService;
     private final PainelService painelService;
+    private final RespostasDeAnimal respostas;
 
-    public PainelController(AnimalService animalService, PainelService painelService) {
+    public PainelController(AnimalService animalService, PainelService painelService,
+                            RespostasDeAnimal respostas) {
         this.animalService = animalService;
         this.painelService = painelService;
+        this.respostas = respostas;
     }
 
     @GetMapping("/animais")
-    @Operation(summary = "Lista os animais do abrigo, inclusive os que nao estao na vitrine")
+    @Operation(summary = "Lista os animais do abrigo, inclusive os que não estão na vitrine")
     public PaginaResponse<AnimalResponse> animais(
             @AuthenticationPrincipal AbrigoAutenticado autenticado,
             @RequestParam(required = false) Especie especie,
@@ -57,25 +61,23 @@ public class PainelController {
             Pageable paginacao) {
 
         var filtro = new AnimalSpecs.Filtro(especie, porte, sexo, status, temperamento, null, null, busca);
-        return PaginaResponse.de(
-                animalService.listarDoAbrigo(autenticado.getAbrigo(), filtro, paginacao),
-                AnimalResponse::de);
+        return respostas.pagina(animalService.listarDoAbrigo(autenticado.getAbrigo(), filtro, paginacao));
     }
 
     @GetMapping("/resumo")
-    @Operation(summary = "Contagem por situacao, fila de candidaturas e tempo medio ate a adocao")
+    @Operation(summary = "Contagem por situação, fila de candidaturas e tempo médio até a adoção")
     public ResumoDoAbrigo resumo(@AuthenticationPrincipal AbrigoAutenticado autenticado) {
         return painelService.resumir(autenticado.getAbrigo());
     }
 
     @GetMapping("/especies")
-    @Operation(summary = "Quantos animais de cada especie o abrigo mantem")
+    @Operation(summary = "Quantos animais de cada espécie o abrigo mantém")
     public List<FatiaDeEspecie> especies(@AuthenticationPrincipal AbrigoAutenticado autenticado) {
         return painelService.porEspecie(autenticado.getAbrigo());
     }
 
     @GetMapping("/adocoes-por-mes")
-    @Operation(summary = "Quantas adocoes foram concluidas a cada mes")
+    @Operation(summary = "Quantas adoções foram concluídas a cada mês")
     public List<AdocoesNoMes> adocoesPorMes(@AuthenticationPrincipal AbrigoAutenticado autenticado,
                                             @RequestParam(defaultValue = "12") int meses) {
         return painelService.adocoesPorMes(autenticado.getAbrigo(), meses);
