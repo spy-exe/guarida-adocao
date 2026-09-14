@@ -19,13 +19,13 @@ import java.util.Set;
 public record CadastrarAnimalRequest(
 
         @NotBlank(message = "todo animal precisa de um nome, nem que seja provisorio")
-        @Size(max = 60, message = "o nome pode ter no maximo 60 caracteres")
+        @Size(max = 60, message = "o nome pode ter no máximo 60 caracteres")
         String nome,
 
-        @NotNull(message = "informe a especie")
+        @NotNull(message = "informe a espécie")
         Especie especie,
 
-        @Size(max = 60, message = "a raca pode ter no maximo 60 caracteres")
+        @Size(max = 60, message = "a raça pode ter no máximo 60 caracteres")
         String raca,
 
         @NotNull(message = "informe o sexo")
@@ -35,7 +35,7 @@ public record CadastrarAnimalRequest(
         Porte porte,
 
         @NotNull(message = "informe a data de nascimento estimada")
-        @PastOrPresent(message = "a data de nascimento nao pode estar no futuro")
+        @PastOrPresent(message = "a data de nascimento não pode estar no futuro")
         LocalDate nascimentoEstimado,
 
         @NotNull(message = "informe o peso em gramas")
@@ -46,13 +46,13 @@ public record CadastrarAnimalRequest(
         Integer pesoEmGramas,
 
         @NotNull(message = "informe a data de entrada no abrigo")
-        @PastOrPresent(message = "a data de entrada nao pode estar no futuro")
+        @PastOrPresent(message = "a data de entrada não pode estar no futuro")
         LocalDate dataDeEntrada,
 
-        @Size(max = 1000, message = "a historia pode ter no maximo 1000 caracteres")
+        @Size(max = 1000, message = "a história pode ter no máximo 1000 caracteres")
         String historia,
 
-        @Size(max = 500, message = "as observacoes podem ter no maximo 500 caracteres")
+        @Size(max = 500, message = "as observações podem ter no máximo 500 caracteres")
         String observacoesDeSaude,
 
         Boolean castrado,
@@ -74,7 +74,7 @@ public record CadastrarAnimalRequest(
     }
 
     @JsonIgnore
-    @AssertTrue(message = "o animal nao pode ter entrado no abrigo antes de nascer")
+    @AssertTrue(message = "o animal não pode ter entrado no abrigo antes de nascer")
     public boolean isEntradaDepoisDoNascimento() {
         if (dataDeEntrada == null || nascimentoEstimado == null) {
             return true;

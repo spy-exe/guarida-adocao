@@ -37,7 +37,7 @@ public class AutenticacaoService {
         String email = normalizar(requisicao.email());
 
         if (abrigoRepository.existsByEmail(email)) {
-            throw new ConflitoException("Ja existe um abrigo cadastrado com este e-mail.");
+            throw new ConflitoException("Já existe um abrigo cadastrado com este e-mail.");
         }
 
         return abrigoRepository.save(new Abrigo(

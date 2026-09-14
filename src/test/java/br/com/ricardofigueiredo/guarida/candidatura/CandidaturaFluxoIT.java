@@ -51,7 +51,7 @@ class CandidaturaFluxoIT {
     }
 
     @Test
-    @DisplayName("a fila de candidaturas so aparece para o abrigo dono")
+    @DisplayName("a fila de candidaturas só aparece para o abrigo dono")
     void filaExigeToken() throws Exception {
         String token = autenticar();
         long animal = criarAnimal(token);
@@ -74,7 +74,7 @@ class CandidaturaFluxoIT {
         long animal = criarAnimal(token);
 
         long primeira = candidatar(animal, "Maria Souza", "maria@exemplo.com");
-        long segunda = candidatar(animal, "Joao Lima", "joao@exemplo.com");
+        long segunda = candidatar(animal, "João Lima", "joao@exemplo.com");
 
         mockMvc.perform(post("/api/v1/candidaturas/" + primeira + "/aprovacao")
                         .header(HttpHeaders.AUTHORIZATION, token))
@@ -90,7 +90,7 @@ class CandidaturaFluxoIT {
     }
 
     @Test
-    @DisplayName("animal reservado nao aceita candidatura nova")
+    @DisplayName("animal reservado não aceita candidatura nova")
     void reservadoNaoAceitaCandidatura() throws Exception {
         String token = autenticar();
         long animal = criarAnimal(token);
@@ -108,7 +108,7 @@ class CandidaturaFluxoIT {
     }
 
     @Test
-    @DisplayName("o ciclo completo: analise, aprovacao, adocao concluida")
+    @DisplayName("o ciclo completo: análise, aprovacao, adoção concluída")
     void cicloCompleto() throws Exception {
         String token = autenticar();
         long animal = criarAnimal(token);
@@ -136,7 +136,7 @@ class CandidaturaFluxoIT {
     }
 
     @Test
-    @DisplayName("animal adotado nao pode ser excluido, mas pode ser devolvido")
+    @DisplayName("animal adotado não pode ser excluído, mas pode ser devolvido")
     void adotadoNaoSeExcluiMasSeDevolve() throws Exception {
         String token = autenticar();
         long animal = criarAnimal(token);
@@ -152,21 +152,21 @@ class CandidaturaFluxoIT {
                         .header(HttpHeaders.AUTHORIZATION, token))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.detail")
-                        .value(org.hamcrest.Matchers.containsString("registre a devolucao")));
+                        .value(org.hamcrest.Matchers.containsString("registre a devolução")));
 
         mockMvc.perform(post("/api/v1/animais/" + animal + "/devolucao")
-                        .param("motivo", "A familia mudou de pais")
+                        .param("motivo", "A família mudou de pais")
                         .header(HttpHeaders.AUTHORIZATION, token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("DISPONIVEL"));
 
         mockMvc.perform(get("/api/v1/animais/" + animal + "/eventos"))
                 .andExpect(jsonPath("$[?(@.tipo == 'DEVOLUCAO')].descricao")
-                        .value(org.hamcrest.Matchers.hasItem("A familia mudou de pais")));
+                        .value(org.hamcrest.Matchers.hasItem("A família mudou de pais")));
     }
 
     @Test
-    @DisplayName("concluir adocao sem aprovacao nao passa")
+    @DisplayName("concluir adoção sem aprovacao não passa")
     void adocaoExigeAprovacao() throws Exception {
         String token = autenticar();
         long animal = criarAnimal(token);
@@ -195,14 +195,14 @@ class CandidaturaFluxoIT {
                         .header(HttpHeaders.AUTHORIZATION, token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"motivo": "O apartamento nao tem tela nas janelas"}"""))
+                                {"motivo": "O apartamento não tem tela nas janelas"}"""))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("RECUSADA"))
-                .andExpect(jsonPath("$.motivoDaRecusa").value("O apartamento nao tem tela nas janelas"));
+                .andExpect(jsonPath("$.motivoDaRecusa").value("O apartamento não tem tela nas janelas"));
     }
 
     @Test
-    @DisplayName("candidatura de outro abrigo nao pode ser mexida")
+    @DisplayName("candidatura de outro abrigo não pode ser mexida")
     void isolamentoEntreAbrigos() throws Exception {
         String token = autenticar();
         long animal = criarAnimal(token);
@@ -216,7 +216,7 @@ class CandidaturaFluxoIT {
     }
 
     @Test
-    @DisplayName("candidatura para animal que nao existe devolve 404")
+    @DisplayName("candidatura para animal que não existe devolve 404")
     void animalInexistente() throws Exception {
         mockMvc.perform(post("/api/v1/animais/999999/candidaturas")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -225,7 +225,7 @@ class CandidaturaFluxoIT {
     }
 
     @Test
-    @DisplayName("dados de contato invalidos nao passam da validacao")
+    @DisplayName("dados de contato invalidos não passam da validação")
     void validacaoDaCandidatura() throws Exception {
         String token = autenticar();
         long animal = criarAnimal(token);
@@ -234,7 +234,7 @@ class CandidaturaFluxoIT {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"nome": "M", "email": "nao-e-email", "telefone": "123",
-                                 "cidade": "Niteroi", "moradia": "CASA"}"""))
+                                 "cidade": "Niterói", "moradia": "CASA"}"""))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.campos.email").isNotEmpty())
                 .andExpect(jsonPath("$.campos.telefone").isNotEmpty())
@@ -242,12 +242,12 @@ class CandidaturaFluxoIT {
     }
 
     @Test
-    @DisplayName("a fila filtra por situacao")
+    @DisplayName("a fila filtra por situação")
     void filtroDaFila() throws Exception {
         String token = autenticar();
         long animal = criarAnimal(token);
         long primeira = candidatar(animal, "Maria Souza", "maria@exemplo.com");
-        candidatar(animal, "Joao Lima", "joao@exemplo.com");
+        candidatar(animal, "João Lima", "joao@exemplo.com");
 
         mockMvc.perform(post("/api/v1/candidaturas/" + primeira + "/analise")
                 .header(HttpHeaders.AUTHORIZATION, token));
@@ -260,7 +260,7 @@ class CandidaturaFluxoIT {
         mockMvc.perform(get("/api/v1/candidaturas").param("status", "RECEBIDA")
                         .header(HttpHeaders.AUTHORIZATION, token))
                 .andExpect(jsonPath("$.totalDeItens").value(1))
-                .andExpect(jsonPath("$.itens[0].nome").value("Joao Lima"));
+                .andExpect(jsonPath("$.itens[0].nome").value("João Lima"));
     }
 
     private long candidatar(long animal, String nome, String email) throws Exception {
@@ -279,7 +279,7 @@ class CandidaturaFluxoIT {
                   "nome": "%s",
                   "email": "%s",
                   "telefone": "21999998888",
-                  "cidade": "Niteroi",
+                  "cidade": "Niterói",
                   "moradia": "APARTAMENTO",
                   "areaProtegida": true,
                   "temOutrosAnimais": false,
@@ -313,8 +313,8 @@ class CandidaturaFluxoIT {
         mockMvc.perform(post("/api/v1/autenticacao/registro")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"nome": "Abrigo Sao Francisco", "email": "%s", "senha": "senhaforte123",
-                                 "cidade": "Niteroi"}""".formatted(email)))
+                                {"nome": "Abrigo São Francisco", "email": "%s", "senha": "senhaforte123",
+                                 "cidade": "Niterói"}""".formatted(email)))
                 .andExpect(status().isCreated());
 
         MvcResult login = mockMvc.perform(post("/api/v1/autenticacao/login")

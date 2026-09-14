@@ -1,9 +1,12 @@
 package br.com.ricardofigueiredo.guarida.animal;
 
 import br.com.ricardofigueiredo.guarida.abrigo.Abrigo;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.JoinType;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.text.Normalizer;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -59,19 +62,38 @@ public final class AnimalSpecs {
                     cb.greaterThan(raiz.get("nascimentoEstimado"), umAnoAtras));
         }
         if (temTexto(filtro.cidade())) {
-            String alvo = filtro.cidade().trim().toLowerCase(Locale.ROOT);
+            String alvo = semAcento(filtro.cidade());
             criterios.add((raiz, consulta, cb) ->
-                    cb.equal(cb.lower(raiz.join("abrigo", JoinType.INNER).get("cidade")), alvo));
+                    cb.equal(normalizado(cb, raiz.join("abrigo", JoinType.INNER).get("cidade")), alvo));
         }
         if (temTexto(filtro.busca())) {
-            String alvo = "%" + filtro.busca().trim().toLowerCase(Locale.ROOT) + "%";
+            String alvo = "%" + semAcento(filtro.busca()) + "%";
             criterios.add((raiz, consulta, cb) -> cb.or(
-                    cb.like(cb.lower(raiz.get("nome")), alvo),
-                    cb.like(cb.lower(cb.coalesce(raiz.get("raca"), "")), alvo),
-                    cb.like(cb.lower(cb.coalesce(raiz.get("historia"), "")), alvo)));
+                    cb.like(normalizado(cb, raiz.get("nome")), alvo),
+                    cb.like(normalizado(cb, cb.coalesce(raiz.get("raca"), "")), alvo),
+                    cb.like(normalizado(cb, cb.coalesce(raiz.get("historia"), "")), alvo)));
         }
 
         return Specification.allOf(criterios);
+    }
+
+    /*
+     * Quem procura digita "niteroi" e espera achar o abrigo de Niteroi com
+     * acento. A comparacao entao tira acento dos dois lados: do termo, aqui no
+     * Java, e da coluna, com translate, que o PostgreSQL e o H2 dos testes
+     * entendem igual. Assim a regra e a mesma nos dois bancos.
+     */
+    private static final String COM_ACENTO = "áàâãäéèêëíìîïóòôõöúùûüç";
+    private static final String SEM_ACENTO = "aaaaaeeeeiiiiooooouuuuc";
+
+    static String semAcento(String texto) {
+        String minusculo = texto.trim().toLowerCase(Locale.ROOT);
+        return Normalizer.normalize(minusculo, Normalizer.Form.NFD).replaceAll("\\p{M}", "");
+    }
+
+    private static Expression<String> normalizado(CriteriaBuilder cb, Expression<String> coluna) {
+        return cb.function("translate", String.class, cb.lower(coluna),
+                cb.literal(COM_ACENTO), cb.literal(SEM_ACENTO));
     }
 
     private static boolean temTexto(String valor) {

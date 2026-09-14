@@ -6,16 +6,16 @@ package br.com.ricardofigueiredo.guarida.animal;
  */
 public enum Temperamento {
 
-    DOCIL("Docil"),
-    BRINCALHAO("Brincalhao"),
-    TIMIDO("Timido"),
+    DOCIL("Dócil"),
+    BRINCALHAO("Brincalhão"),
+    TIMIDO("Tímido"),
     CALMO("Calmo"),
     AGITADO("Agitado"),
     PROTETOR("Protetor"),
-    SOCIAVEL_COM_CAES("Se da bem com caes"),
+    SOCIAVEL_COM_CAES("Se da bem com cães"),
     SOCIAVEL_COM_GATOS("Se da bem com gatos"),
-    BOM_COM_CRIANCAS("Bom com criancas"),
-    PRECISA_DE_ESPACO("Precisa de espaco");
+    BOM_COM_CRIANCAS("Bom com crianças"),
+    PRECISA_DE_ESPACO("Precisa de espaço");
 
     private final String rotulo;
 

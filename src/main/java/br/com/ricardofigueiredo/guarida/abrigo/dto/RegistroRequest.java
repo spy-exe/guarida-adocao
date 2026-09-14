@@ -8,12 +8,12 @@ import jakarta.validation.constraints.Size;
 public record RegistroRequest(
 
         @NotBlank(message = "informe o nome do abrigo")
-        @Size(max = 120, message = "o nome pode ter no maximo 120 caracteres")
+        @Size(max = 120, message = "o nome pode ter no máximo 120 caracteres")
         String nome,
 
         @NotBlank(message = "informe o e-mail")
-        @Email(message = "e-mail em formato invalido")
-        @Size(max = 160, message = "o e-mail pode ter no maximo 160 caracteres")
+        @Email(message = "e-mail em formato inválido")
+        @Size(max = 160, message = "o e-mail pode ter no máximo 160 caracteres")
         String email,
 
         @NotBlank(message = "informe a senha")
@@ -21,9 +21,9 @@ public record RegistroRequest(
         String senha,
 
         @NotBlank(message = "informe a cidade")
-        @Size(max = 80, message = "a cidade pode ter no maximo 80 caracteres")
+        @Size(max = 80, message = "a cidade pode ter no máximo 80 caracteres")
         String cidade,
 
-        @Pattern(regexp = "[0-9()\\s+-]{0,20}", message = "telefone em formato invalido")
+        @Pattern(regexp = "[0-9()\\s+-]{0,20}", message = "telefone em formato inválido")
         String telefone) {
 }

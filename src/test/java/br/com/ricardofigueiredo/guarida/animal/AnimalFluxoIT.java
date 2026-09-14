@@ -53,14 +53,14 @@ class AnimalFluxoIT {
                 .andExpect(jsonPath("$.nome").value("Bidu"))
                 .andExpect(jsonPath("$.especie").value("CACHORRO"))
                 .andExpect(jsonPath("$.status").value("DISPONIVEL"))
-                .andExpect(jsonPath("$.statusRotulo").value("Disponivel para adocao"))
+                .andExpect(jsonPath("$.statusRotulo").value("Disponível para adoção"))
                 .andExpect(jsonPath("$.idadeRotulo").value("2 anos"))
-                .andExpect(jsonPath("$.temperamentos[0].rotulo").value("Docil"))
-                .andExpect(jsonPath("$.abrigo.nome").value("Abrigo Sao Francisco"));
+                .andExpect(jsonPath("$.temperamentos[0].rotulo").value("Dócil"))
+                .andExpect(jsonPath("$.abrigo.nome").value("Abrigo São Francisco"));
     }
 
     @Test
-    @DisplayName("consultar todos devolve a pagina do catalogo, sem exigir token")
+    @DisplayName("consultar todos devolve a página do catálogo, sem exigir token")
     void consultarTodos() throws Exception {
         String token = autenticar();
         criar(token, "Bidu");
@@ -86,20 +86,20 @@ class AnimalFluxoIT {
     }
 
     @Test
-    @DisplayName("id que nao existe devolve 404 no formato de problema")
+    @DisplayName("id que não existe devolve 404 no formato de problema")
     void idInexistente() throws Exception {
         mockMvc.perform(get("/api/v1/animais/999999"))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.title").value("Recurso nao encontrado"))
+                .andExpect(jsonPath("$.title").value("Recurso não encontrado"))
                 .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString("999999")));
     }
 
     @Test
-    @DisplayName("id que nem numero e devolve 400, e nao erro do servidor")
+    @DisplayName("id que nem número e devolve 400, e não erro do servidor")
     void idQueNaoENumero() throws Exception {
         mockMvc.perform(get("/api/v1/animais/bidu"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.title").value("Requisicao invalida"));
+                .andExpect(jsonPath("$.title").value("Requisição inválida"));
     }
 
     @Test
@@ -138,7 +138,7 @@ class AnimalFluxoIT {
     }
 
     @Test
-    @DisplayName("excluir devolve 204 e o animal some do catalogo")
+    @DisplayName("excluir devolve 204 e o animal some do catálogo")
     void excluir() throws Exception {
         String token = autenticar();
         long id = criar(token, "Bidu");
@@ -154,7 +154,7 @@ class AnimalFluxoIT {
     }
 
     @Test
-    @DisplayName("sem token ninguem cadastra, altera nem exclui")
+    @DisplayName("sem token ninguém cadastra, altera nem exclui")
     void escritaExigeToken() throws Exception {
         String token = autenticar();
         long id = criar(token, "Bidu");
@@ -171,11 +171,11 @@ class AnimalFluxoIT {
 
         mockMvc.perform(delete("/api/v1/animais/" + id))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.title").value("Nao autenticado"));
+                .andExpect(jsonPath("$.title").value("Não autenticado"));
     }
 
     @Test
-    @DisplayName("um abrigo nao altera nem exclui o animal de outro")
+    @DisplayName("um abrigo não altera nem exclui o animal de outro")
     void isolamentoEntreAbrigos() throws Exception {
         String tokenDoDono = autenticar();
         long id = criar(tokenDoDono, "Bidu");
@@ -193,7 +193,7 @@ class AnimalFluxoIT {
     }
 
     @Test
-    @DisplayName("campo obrigatorio faltando devolve 400 apontando o campo")
+    @DisplayName("campo obrigatório faltando devolve 400 apontando o campo")
     void validacaoDeCampos() throws Exception {
         String token = autenticar();
 
@@ -209,7 +209,7 @@ class AnimalFluxoIT {
     }
 
     @Test
-    @DisplayName("animal nao pode ter entrado no abrigo antes de nascer")
+    @DisplayName("animal não pode ter entrado no abrigo antes de nascer")
     void entradaAntesDoNascimento() throws Exception {
         String token = autenticar();
 
@@ -232,20 +232,20 @@ class AnimalFluxoIT {
     }
 
     @Test
-    @DisplayName("corpo que nao e JSON devolve 400 explicando, e nao 500")
+    @DisplayName("corpo que não e JSON devolve 400 explicando, e não 500")
     void corpoIlegivel() throws Exception {
         String token = autenticar();
 
         mockMvc.perform(post("/api/v1/animais")
                         .header(HttpHeaders.AUTHORIZATION, token)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("isso nao e json"))
+                        .content("isso não e json"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString("JSON")));
     }
 
     @Test
-    @DisplayName("o catalogo filtra por especie, porte, filhote e busca livre")
+    @DisplayName("o catálogo filtra por espécie, porte, filhote e busca livre")
     void filtrosDoCatalogo() throws Exception {
         String token = autenticar();
         criar(token, "Bidu");
@@ -309,7 +309,7 @@ class AnimalFluxoIT {
     }
 
     @Test
-    @DisplayName("o abrigo registra vacina e castracao na linha do tempo")
+    @DisplayName("o abrigo registra vacina e castração na linha do tempo")
     void registraEventos() throws Exception {
         String token = autenticar();
         long id = criar(token, "Bidu");
@@ -360,8 +360,8 @@ class AnimalFluxoIT {
         mockMvc.perform(post("/api/v1/autenticacao/registro")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"nome": "Abrigo Sao Francisco", "email": "%s", "senha": "senhaforte123",
-                                 "cidade": "Niteroi", "telefone": "21999998888"}""".formatted(email)))
+                                {"nome": "Abrigo São Francisco", "email": "%s", "senha": "senhaforte123",
+                                 "cidade": "Niterói", "telefone": "21999998888"}""".formatted(email)))
                 .andExpect(status().isCreated());
 
         MvcResult login = mockMvc.perform(post("/api/v1/autenticacao/login")

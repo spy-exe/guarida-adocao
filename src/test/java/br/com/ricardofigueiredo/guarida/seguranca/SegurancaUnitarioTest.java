@@ -40,12 +40,12 @@ class SegurancaUnitarioTest {
     }
 
     @Test
-    @DisplayName("token adulterado, expirado ou de outra chave nao devolve e-mail")
+    @DisplayName("token adulterado, expirado ou de outra chave não devolve e-mail")
     void tokenInvalidoNaoAbre() {
         String valido = jwtService.gerarToken("abrigo@exemplo.com", Instant.now().plusSeconds(60));
 
         assertThat(jwtService.emailDoToken(valido)).contains("abrigo@exemplo.com");
-        assertThat(jwtService.emailDoToken("nao e um token")).isEmpty();
+        assertThat(jwtService.emailDoToken("não e um token")).isEmpty();
         assertThat(jwtService.emailDoToken("")).isEmpty();
 
         // trocar um caractere da assinatura muda os bytes de verdade. Acrescentar
@@ -75,7 +75,7 @@ class SegurancaUnitarioTest {
     }
 
     @Test
-    @DisplayName("o servico de detalhes recusa e-mail que nao existe")
+    @DisplayName("o serviço de detalhes recusa e-mail que não existe")
     void abrigoInexistente() {
         AbrigoRepository repositorio = mock(AbrigoRepository.class);
         when(repositorio.findByEmail("ninguem@exemplo.com")).thenReturn(Optional.empty());
@@ -89,7 +89,7 @@ class SegurancaUnitarioTest {
     @Test
     @DisplayName("o abrigo autenticado carrega e-mail e hash de senha para o Spring Security")
     void detalhesDoAbrigo() {
-        Abrigo abrigo = new Abrigo("Abrigo", "abrigo@exemplo.com", "hash", "Niteroi", null);
+        Abrigo abrigo = new Abrigo("Abrigo", "abrigo@exemplo.com", "hash", "Niterói", null);
         AbrigoAutenticado autenticado = new AbrigoAutenticado(abrigo);
 
         assertThat(autenticado.getUsername()).isEqualTo("abrigo@exemplo.com");
@@ -99,7 +99,7 @@ class SegurancaUnitarioTest {
     }
 
     @Test
-    @DisplayName("requisicao sem cabecalho segue adiante sem autenticar")
+    @DisplayName("requisição sem cabecalho segue adiante sem autenticar")
     void semCabecalhoNaoAutentica() throws Exception {
         FilterChain cadeia = mock(FilterChain.class);
         filtro(mock(DetalhesDoAbrigoService.class))
@@ -124,7 +124,7 @@ class SegurancaUnitarioTest {
     @Test
     @DisplayName("token valido coloca o abrigo no contexto")
     void tokenValidoAutentica() throws Exception {
-        Abrigo abrigo = new Abrigo("Abrigo", "abrigo@exemplo.com", "hash", "Niteroi", null);
+        Abrigo abrigo = new Abrigo("Abrigo", "abrigo@exemplo.com", "hash", "Niterói", null);
         DetalhesDoAbrigoService detalhes = mock(DetalhesDoAbrigoService.class);
         when(detalhes.loadUserByUsername("abrigo@exemplo.com")).thenReturn(new AbrigoAutenticado(abrigo));
 
@@ -155,7 +155,7 @@ class SegurancaUnitarioTest {
     }
 
     @Test
-    @DisplayName("contexto ja autenticado nao e sobrescrito")
+    @DisplayName("contexto já autenticado não e sobrescrito")
     void contextoJaAutenticadoNaoMuda() throws Exception {
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken("outro", null, List.of()));
@@ -180,7 +180,7 @@ class SegurancaUnitarioTest {
 
         assertThat(resposta.getStatus()).isEqualTo(401);
         assertThat(resposta.getContentType()).isEqualTo("application/problem+json");
-        assertThat(resposta.getContentAsString()).contains("Nao autenticado");
+        assertThat(resposta.getContentAsString()).contains("Não autenticado");
     }
 
     private String comAssinaturaTrocada(String token) {

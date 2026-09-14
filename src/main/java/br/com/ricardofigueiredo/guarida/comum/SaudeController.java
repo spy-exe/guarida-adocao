@@ -9,7 +9,7 @@ import java.time.Instant;
 import java.util.Map;
 
 @RestController
-@Tag(name = "Servico", description = "Verificacao de disponibilidade")
+@Tag(name = "Serviço", description = "Verificacao de disponibilidade")
 public class SaudeController {
 
     @GetMapping("/saude")

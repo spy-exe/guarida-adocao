@@ -87,7 +87,7 @@ public class AnimalService {
         eventoRepository.deleteByAnimal(animal);
         animalRepository.delete(animal);
 
-        log.info("animal {} excluido pelo abrigo {}", id, abrigo.getEmail());
+        log.info("animal {} excluído pelo abrigo {}", id, abrigo.getEmail());
     }
 
     @Transactional(readOnly = true)

@@ -8,7 +8,7 @@ package br.com.ricardofigueiredo.guarida.candidatura;
 public enum StatusDaCandidatura {
 
     RECEBIDA("Recebida"),
-    EM_ANALISE("Em analise"),
+    EM_ANALISE("Em análise"),
     APROVADA("Aprovada"),
     RECUSADA("Recusada"),
     CANCELADA("Cancelada");

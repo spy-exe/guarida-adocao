@@ -15,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class AnimalTest {
 
     @Test
-    @DisplayName("animal recem cadastrado ja nasce disponivel para adocao")
+    @DisplayName("animal recém cadastrado já nasce disponível para adoção")
     void nasceDisponivel() {
         Animal animal = novo();
 
@@ -36,13 +36,13 @@ class AnimalTest {
     }
 
     @Test
-    @DisplayName("animal nascido hoje tem idade zero, e nao negativa")
+    @DisplayName("animal nascido hoje tem idade zero, e não negativa")
     void idadeNuncaFicaNegativa() {
         assertThat(comNascimento(LocalDate.now()).idadeEmMeses()).isZero();
     }
 
     @Test
-    @DisplayName("editar troca os dados e guarda os tracos de temperamento")
+    @DisplayName("editar troca os dados e guarda os traços de temperamento")
     void editaOCadastro() {
         Animal animal = novo();
 
@@ -59,7 +59,7 @@ class AnimalTest {
     }
 
     @Test
-    @DisplayName("editar sem tracos limpa a lista em vez de estourar")
+    @DisplayName("editar sem traços limpa a lista em vez de estourar")
     void editaSemTracos() {
         Animal animal = novo();
         animal.editar("Bidu", Especie.CACHORRO, null, Sexo.MACHO, Porte.MEDIO,
@@ -70,7 +70,7 @@ class AnimalTest {
     }
 
     @Test
-    @DisplayName("a lista de tracos devolvida e uma copia, e nao a colecao interna")
+    @DisplayName("a lista de traços devolvida e uma copia, e não a colecao interna")
     void tracosNaoVazamPorReferencia() {
         Animal animal = novo();
         animal.editar("Bidu", Especie.CACHORRO, null, Sexo.MACHO, Porte.MEDIO,
@@ -93,7 +93,7 @@ class AnimalTest {
     }
 
     @Test
-    @DisplayName("nao da para reservar duas vezes")
+    @DisplayName("não da para reservar duas vezes")
     void naoReservaDuasVezes() {
         Animal animal = novo();
         animal.reservar();
@@ -104,7 +104,7 @@ class AnimalTest {
     }
 
     @Test
-    @DisplayName("a adocao so fecha depois da reserva")
+    @DisplayName("a adoção só fecha depois da reserva")
     void adocaoExigeReserva() {
         Animal animal = novo();
 
@@ -118,7 +118,7 @@ class AnimalTest {
     }
 
     @Test
-    @DisplayName("animal adotado volta para a vitrine por devolucao")
+    @DisplayName("animal adotado volta para a vitrine por devolução")
     void devolucaoVoltaParaAVitrine() {
         Animal animal = novo();
         animal.reservar();
@@ -129,15 +129,15 @@ class AnimalTest {
     }
 
     @Test
-    @DisplayName("devolver quem ja esta disponivel nao faz sentido")
+    @DisplayName("devolver quem já esta disponível não faz sentido")
     void naoDevolveQuemJaEstaDisponivel() {
         assertThatThrownBy(() -> novo().devolverParaAdocao())
                 .isInstanceOf(RegraDeNegocioException.class)
-                .hasMessageContaining("ja esta disponivel");
+                .hasMessageContaining("já esta disponível");
     }
 
     @Test
-    @DisplayName("suspender tira da vitrine, e adotado nao pode ser suspenso")
+    @DisplayName("suspender tira da vitrine, e adotado não pode ser suspenso")
     void suspensao() {
         Animal animal = novo();
         animal.suspender();
@@ -153,7 +153,7 @@ class AnimalTest {
     }
 
     @Test
-    @DisplayName("animal adotado nao pode ser excluido, para nao apagar a adocao")
+    @DisplayName("animal adotado não pode ser excluído, para não apagar a adoção")
     void adotadoNaoSeExclui() {
         Animal animal = novo();
         assertThatCode(animal::exigirQuePodeSerExcluido).doesNotThrowAnyException();
@@ -164,7 +164,7 @@ class AnimalTest {
         animal.concluirAdocao();
         assertThatThrownBy(animal::exigirQuePodeSerExcluido)
                 .isInstanceOf(RegraDeNegocioException.class)
-                .hasMessageContaining("registre a devolucao");
+                .hasMessageContaining("registre a devolução");
     }
 
     private Animal novo() {
@@ -172,8 +172,8 @@ class AnimalTest {
     }
 
     private Animal comNascimento(LocalDate nascimento) {
-        Abrigo abrigo = new Abrigo("Abrigo Sao Francisco", "abrigo@exemplo.com", "hash",
-                "Niteroi", "21999998888");
+        Abrigo abrigo = new Abrigo("Abrigo São Francisco", "abrigo@exemplo.com", "hash",
+                "Niterói", "21999998888");
         return new Animal(abrigo, "Bidu", Especie.CACHORRO, "SRD", Sexo.MACHO, Porte.MEDIO,
                 nascimento, 15000, LocalDate.now().minusMonths(1));
     }

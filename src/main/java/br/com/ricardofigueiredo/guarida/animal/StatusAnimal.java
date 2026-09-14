@@ -14,10 +14,10 @@ package br.com.ricardofigueiredo.guarida.animal;
  */
 public enum StatusAnimal {
 
-    DISPONIVEL("Disponivel para adocao"),
-    EM_PROCESSO("Em processo de adocao"),
+    DISPONIVEL("Disponível para adoção"),
+    EM_PROCESSO("Em processo de adoção"),
     ADOTADO("Adotado"),
-    INDISPONIVEL("Indisponivel no momento");
+    INDISPONIVEL("Indisponível no momento");
 
     private final String rotulo;
 

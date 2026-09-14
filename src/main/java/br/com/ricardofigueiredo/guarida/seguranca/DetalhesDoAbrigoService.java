@@ -19,6 +19,6 @@ public class DetalhesDoAbrigoService implements UserDetailsService {
     public UserDetails loadUserByUsername(String email) {
         return abrigoRepository.findByEmail(email)
                 .map(AbrigoAutenticado::new)
-                .orElseThrow(() -> new UsernameNotFoundException("abrigo nao encontrado"));
+                .orElseThrow(() -> new UsernameNotFoundException("abrigo não encontrado"));
     }
 }

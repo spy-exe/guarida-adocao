@@ -6,6 +6,6 @@ import jakarta.validation.constraints.Size;
 public record RecusarRequest(
 
         @NotBlank(message = "escreva o motivo da recusa")
-        @Size(max = 300, message = "o motivo pode ter no maximo 300 caracteres")
+        @Size(max = 300, message = "o motivo pode ter no máximo 300 caracteres")
         String motivo) {
 }

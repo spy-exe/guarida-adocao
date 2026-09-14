@@ -3,7 +3,7 @@ package br.com.ricardofigueiredo.guarida.animal;
 public enum Sexo {
 
     MACHO("Macho"),
-    FEMEA("Femea");
+    FEMEA("Fêmea");
 
     private final String rotulo;
 

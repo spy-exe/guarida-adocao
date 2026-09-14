@@ -21,9 +21,9 @@ public class OpenApiConfig {
                         .title("Guarida")
                         .version("1.0.0")
                         .description("""
-                                Cadastro e gerenciamento de animais para adocao.
+                                Cadastro e gerenciamento de animais para adoção.
 
-                                Consultar o catalogo e se candidatar a adotar nao exigem token. Cadastrar,
+                                Consultar o catálogo e se candidatar a adotar não exigem token. Cadastrar,
                                 alterar e excluir exigem: crie um abrigo em /api/v1/autenticacao/registro,
                                 pegue o token em /login e cole no botao Authorize.""")
                         .contact(new Contact().name("Ricardo Figueiredo")))

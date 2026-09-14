@@ -96,7 +96,7 @@ public class Candidatura {
     }
 
     public void colocarEmAnalise() {
-        exigirEmAberto("colocar em analise");
+        exigirEmAberto("colocar em análise");
         this.status = StatusDaCandidatura.EM_ANALISE;
         marcarAlteracao();
     }
@@ -112,7 +112,7 @@ public class Candidatura {
         exigirEmAberto("recusar");
         if (motivo == null || motivo.isBlank()) {
             throw new RegraDeNegocioException(
-                    "Recusa sem motivo nao ajuda ninguem. Escreva o que faltou.");
+                    "Recusa sem motivo não ajuda ninguém. Escreva o que faltou.");
         }
         this.status = StatusDaCandidatura.RECUSADA;
         this.motivoDaRecusa = motivo.trim();
@@ -134,8 +134,8 @@ public class Candidatura {
 
     private void exigirEmAberto(String acao) {
         if (!EM_ABERTO.contains(status)) {
-            throw new RegraDeNegocioException("So da para " + acao
-                    + " uma candidatura em aberto. Situacao atual: " + status.getRotulo() + ".");
+            throw new RegraDeNegocioException("Só da para " + acao
+                    + " uma candidatura em aberto. Situação atual: " + status.getRotulo() + ".");
         }
     }
 

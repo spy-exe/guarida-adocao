@@ -33,7 +33,7 @@ class PainelIT {
     private ObjectMapper objectMapper;
 
     @Test
-    @DisplayName("abrigo sem nenhum animal recebe resumo zerado, e nao erro")
+    @DisplayName("abrigo sem nenhum animal recebe resumo zerado, e não erro")
     void resumoVazio() throws Exception {
         String token = autenticar();
 
@@ -45,7 +45,7 @@ class PainelIT {
     }
 
     @Test
-    @DisplayName("o resumo conta por situacao e soma no banco")
+    @DisplayName("o resumo conta por situação e soma no banco")
     void resumoContaPorSituacao() throws Exception {
         String token = autenticar();
         criarAnimal(token, "Bidu", "CACHORRO");
@@ -80,7 +80,7 @@ class PainelIT {
     }
 
     @Test
-    @DisplayName("a contagem por especie sai ordenada da maior para a menor")
+    @DisplayName("a contagem por espécie sai ordenada da maior para a menor")
     void contagemPorEspecie() throws Exception {
         String token = autenticar();
         criarAnimal(token, "Bidu", "CACHORRO");
@@ -96,7 +96,7 @@ class PainelIT {
     }
 
     @Test
-    @DisplayName("adocao concluida aparece na contagem mensal e no tempo medio")
+    @DisplayName("adoção concluída aparece na contagem mensal e no tempo médio")
     void adocoesPorMes() throws Exception {
         String token = autenticar();
         long bidu = criarAnimal(token, "Bidu", "CACHORRO");
@@ -119,7 +119,7 @@ class PainelIT {
     }
 
     @Test
-    @DisplayName("o painel mostra tambem os animais fora da vitrine, o catalogo nao")
+    @DisplayName("o painel mostra também os animais fora da vitrine, o catálogo não")
     void painelMostraOsSuspensos() throws Exception {
         String token = autenticar();
         long tobias = criarAnimal(token, "Tobias", "CACHORRO");
@@ -135,7 +135,7 @@ class PainelIT {
     }
 
     @Test
-    @DisplayName("o painel de um abrigo nao mostra o acervo de outro")
+    @DisplayName("o painel de um abrigo não mostra o acervo de outro")
     void painelIsolaPorAbrigo() throws Exception {
         String tokenA = autenticar();
         criarAnimal(tokenA, "Bidu", "CACHORRO");
@@ -162,7 +162,7 @@ class PainelIT {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"nome": "Maria Souza", "email": "maria-%s@exemplo.com",
-                                 "telefone": "21999998888", "cidade": "Niteroi", "moradia": "CASA",
+                                 "telefone": "21999998888", "cidade": "Niterói", "moradia": "CASA",
                                  "areaProtegida": true, "temOutrosAnimais": false}"""
                                 .formatted(UUID.randomUUID())))
                 .andExpect(status().isCreated())
@@ -199,7 +199,7 @@ class PainelIT {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                         {"nome": "Abrigo", "email": "%s", "senha": "senhaforte123",
-                         "cidade": "Niteroi"}""".formatted(email)));
+                         "cidade": "Niterói"}""".formatted(email)));
 
         MvcResult login = mockMvc.perform(post("/api/v1/autenticacao/login")
                 .contentType(MediaType.APPLICATION_JSON)

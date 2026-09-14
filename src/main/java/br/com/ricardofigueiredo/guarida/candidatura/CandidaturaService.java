@@ -40,7 +40,7 @@ public class CandidaturaService {
 
         if (animal.getStatus() != StatusAnimal.DISPONIVEL) {
             throw new RegraDeNegocioException(animal.getNome()
-                    + " nao esta disponivel para adocao no momento. Situacao atual: "
+                    + " não esta disponível para adoção no momento. Situação atual: "
                     + animal.getStatus().getRotulo() + ".");
         }
 
@@ -125,7 +125,7 @@ public class CandidaturaService {
 
         if (candidatura.getStatus() != StatusDaCandidatura.APROVADA) {
             throw new RegraDeNegocioException(
-                    "So da para concluir a adocao a partir de uma candidatura aprovada. Situacao atual: "
+                    "Só da para concluir a adoção a partir de uma candidatura aprovada. Situação atual: "
                             + candidatura.getStatus().getRotulo() + ".");
         }
 
@@ -146,7 +146,7 @@ public class CandidaturaService {
         Animal animal = animalService.buscarDoAbrigo(abrigo, animalId);
 
         if (animal.getStatus() != StatusAnimal.ADOTADO) {
-            throw new RegraDeNegocioException("So um animal adotado pode ser devolvido.");
+            throw new RegraDeNegocioException("Só um animal adotado pode ser devolvido.");
         }
 
         animal.devolverParaAdocao();

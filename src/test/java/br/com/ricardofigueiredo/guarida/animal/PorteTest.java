@@ -24,8 +24,8 @@ class PorteTest {
     }
 
     @ParameterizedTest
-    @CsvSource({"PEQUENO, Pequeno", "MEDIO, Medio", "GRANDE, Grande"})
-    @DisplayName("cada porte tem um rotulo pronto para a tela")
+    @CsvSource({"PEQUENO, Pequeno", "MEDIO, Médio", "GRANDE, Grande"})
+    @DisplayName("cada porte tem um rótulo pronto para a tela")
     void temRotulo(Porte porte, String rotulo) {
         assertThat(porte.getRotulo()).isEqualTo(rotulo);
     }

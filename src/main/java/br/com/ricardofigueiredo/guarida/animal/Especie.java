@@ -5,7 +5,7 @@ public enum Especie {
     CACHORRO("Cachorro"),
     GATO("Gato"),
     COELHO("Coelho"),
-    PASSARO("Passaro"),
+    PASSARO("Pássaro"),
     OUTRO("Outro");
 
     private final String rotulo;

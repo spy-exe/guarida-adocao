@@ -14,9 +14,9 @@ public record RegistrarEventoRequest(
         TipoDeEvento tipo,
 
         @NotBlank(message = "descreva o que aconteceu")
-        @Size(max = 300, message = "a descricao pode ter no maximo 300 caracteres")
+        @Size(max = 300, message = "a descricao pode ter no máximo 300 caracteres")
         String descricao,
 
-        @PastOrPresent(message = "o evento nao pode ter acontecido no futuro")
+        @PastOrPresent(message = "o evento não pode ter acontecido no futuro")
         LocalDate acontecido) {
 }

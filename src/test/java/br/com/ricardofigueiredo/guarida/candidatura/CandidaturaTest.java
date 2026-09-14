@@ -26,7 +26,7 @@ class CandidaturaTest {
     }
 
     @Test
-    @DisplayName("colocar em analise mantem a candidatura em aberto")
+    @DisplayName("colocar em análise mantém a candidatura em aberto")
     void analise() {
         Candidatura candidatura = nova();
         candidatura.colocarEmAnalise();
@@ -47,7 +47,7 @@ class CandidaturaTest {
     }
 
     @Test
-    @DisplayName("recusa sem motivo nao passa, porque nao ajuda quem recebeu")
+    @DisplayName("recusa sem motivo não passa, porque não ajuda quem recebeu")
     void recusaExigeMotivo() {
         assertThatThrownBy(() -> nova().recusar("  "))
                 .isInstanceOf(RegraDeNegocioException.class)
@@ -58,7 +58,7 @@ class CandidaturaTest {
     }
 
     @Test
-    @DisplayName("recusa guarda o motivo sem espaco sobrando")
+    @DisplayName("recusa guarda o motivo sem espaço sobrando")
     void recusaGuardaOMotivo() {
         Candidatura candidatura = nova();
         candidatura.recusar("  mora longe demais para o acompanhamento  ");
@@ -68,7 +68,7 @@ class CandidaturaTest {
     }
 
     @Test
-    @DisplayName("candidatura ja fechada nao muda mais de estado")
+    @DisplayName("candidatura já fechada não muda mais de estado")
     void fechadaNaoMuda() {
         Candidatura aprovada = nova();
         aprovada.aprovar();
@@ -79,7 +79,7 @@ class CandidaturaTest {
     }
 
     @Test
-    @DisplayName("cancelar so mexe em quem esta em aberto, e nao reclama do resto")
+    @DisplayName("cancelar só mexe em quem esta em aberto, e não reclama do resto")
     void cancelamento() {
         Candidatura emAberto = nova();
         emAberto.cancelar();
@@ -92,11 +92,11 @@ class CandidaturaTest {
     }
 
     private Candidatura nova() {
-        Abrigo abrigo = new Abrigo("Abrigo", "abrigo@exemplo.com", "hash", "Niteroi", null);
+        Abrigo abrigo = new Abrigo("Abrigo", "abrigo@exemplo.com", "hash", "Niterói", null);
         Animal animal = new Animal(abrigo, "Bidu", Especie.CACHORRO, "SRD", Sexo.MACHO, Porte.MEDIO,
                 LocalDate.now().minusYears(2), 15000, LocalDate.now().minusMonths(1));
 
-        return new Candidatura(animal, "Maria", "maria@exemplo.com", "21999998888", "Niteroi",
+        return new Candidatura(animal, "Maria", "maria@exemplo.com", "21999998888", "Niterói",
                 TipoDeMoradia.APARTAMENTO, true, false, "Moro sozinha e trabalho de casa");
     }
 }

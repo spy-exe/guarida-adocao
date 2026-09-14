@@ -29,7 +29,7 @@ public class RespostaNaoAutorizado implements AuthenticationEntryPoint {
     public void commence(HttpServletRequest requisicao, HttpServletResponse resposta,
                          AuthenticationException excecao) throws IOException {
         ProblemDetail problema = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED);
-        problema.setTitle("Nao autenticado");
+        problema.setTitle("Não autenticado");
         problema.setDetail("Entre com o abrigo e envie o token em Authorization: Bearer <token>.");
 
         resposta.setStatus(HttpStatus.UNAUTHORIZED.value());

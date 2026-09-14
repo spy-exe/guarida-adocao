@@ -3,7 +3,7 @@ package br.com.ricardofigueiredo.guarida.animal;
 public enum Porte {
 
     PEQUENO("Pequeno", 0, 10_000),
-    MEDIO("Medio", 10_001, 25_000),
+    MEDIO("Médio", 10_001, 25_000),
     GRANDE("Grande", 25_001, Integer.MAX_VALUE);
 
     private final String rotulo;

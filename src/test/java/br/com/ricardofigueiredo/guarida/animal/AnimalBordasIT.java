@@ -43,7 +43,7 @@ class AnimalBordasIT {
     }
 
     @Test
-    @DisplayName("o mesmo e-mail nao cadastra dois abrigos")
+    @DisplayName("o mesmo e-mail não cadastra dois abrigos")
     void emailRepetidoNaoCadastra() throws Exception {
         String email = "repetido-" + UUID.randomUUID() + "@exemplo.com";
 
@@ -72,7 +72,7 @@ class AnimalBordasIT {
                         .content("""
                                 {"email": "%s", "senha": "senhaerrada123"}""".formatted(email)))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.detail").value("E-mail ou senha nao conferem."));
+                .andExpect(jsonPath("$.detail").value("E-mail ou senha não conferem."));
     }
 
     @Test
@@ -82,12 +82,12 @@ class AnimalBordasIT {
 
         mockMvc.perform(get("/api/v1/autenticacao/eu").header(HttpHeaders.AUTHORIZATION, token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.nome").value("Abrigo Sao Francisco"))
-                .andExpect(jsonPath("$.cidade").value("Niteroi"));
+                .andExpect(jsonPath("$.nome").value("Abrigo São Francisco"))
+                .andExpect(jsonPath("$.cidade").value("Niterói"));
     }
 
     @Test
-    @DisplayName("o catalogo filtra por sexo, situacao e cidade do abrigo")
+    @DisplayName("o catálogo filtra por sexo, situação e cidade do abrigo")
     void filtrosMenosUsados() throws Exception {
         String token = autenticar();
         criar(token, "Bidu", "MACHO");
@@ -126,7 +126,7 @@ class AnimalBordasIT {
     }
 
     @Test
-    @DisplayName("devolucao sem motivo grava um texto padrao")
+    @DisplayName("devolução sem motivo grava um texto padrao")
     void devolucaoSemMotivo() throws Exception {
         String token = autenticar();
         long id = criar(token, "Bidu", "MACHO");
@@ -135,7 +135,7 @@ class AnimalBordasIT {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                         {"nome": "Maria", "email": "maria@exemplo.com", "telefone": "21999998888",
-                         "cidade": "Niteroi", "moradia": "CASA", "areaProtegida": true,
+                         "cidade": "Niterói", "moradia": "CASA", "areaProtegida": true,
                          "temOutrosAnimais": false}""")).andReturn();
         long idDaCandidatura = ler(candidatura).get("id").asLong();
 
@@ -154,7 +154,7 @@ class AnimalBordasIT {
     }
 
     @Test
-    @DisplayName("devolver quem nao foi adotado nao passa")
+    @DisplayName("devolver quem não foi adotado não passa")
     void devolucaoDeQuemNaoFoiAdotado() throws Exception {
         String token = autenticar();
         long id = criar(token, "Bidu", "MACHO");
@@ -167,7 +167,7 @@ class AnimalBordasIT {
     }
 
     @Test
-    @DisplayName("a janela de meses do grafico e limitada, nao importa o que peçam")
+    @DisplayName("a janela de meses do grafico e limitada, não importa o que peçam")
     void janelaDeMesesLimitada() throws Exception {
         String token = autenticar();
 
@@ -203,8 +203,8 @@ class AnimalBordasIT {
 
     private String corpoDeRegistro(String email, String telefone) {
         return """
-                {"nome": "Abrigo Sao Francisco", "email": "%s", "senha": "senhaforte123",
-                 "cidade": "Niteroi"%s}"""
+                {"nome": "Abrigo São Francisco", "email": "%s", "senha": "senhaforte123",
+                 "cidade": "Niterói"%s}"""
                 .formatted(email, telefone == null ? "" : ", \"telefone\": \"" + telefone + "\"");
     }
 

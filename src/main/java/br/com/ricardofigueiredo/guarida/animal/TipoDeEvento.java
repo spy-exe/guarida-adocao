@@ -4,12 +4,12 @@ public enum TipoDeEvento {
 
     ENTRADA("Entrada no abrigo"),
     VACINA("Vacina"),
-    VERMIFUGO("Vermifugo"),
-    CASTRACAO("Castracao"),
-    CONSULTA("Consulta veterinaria"),
-    ATUALIZACAO("Atualizacao do cadastro"),
-    ADOCAO("Adocao concluida"),
-    DEVOLUCAO("Devolucao ao abrigo");
+    VERMIFUGO("Vermífugo"),
+    CASTRACAO("Castração"),
+    CONSULTA("Consulta veterinária"),
+    ATUALIZACAO("Atualização do cadastro"),
+    ADOCAO("Adoção concluída"),
+    DEVOLUCAO("Devolução ao abrigo");
 
     private final String rotulo;
 

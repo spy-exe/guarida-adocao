@@ -71,7 +71,7 @@ class SemTransacaoDeTesteIT {
     }
 
     @Test
-    @DisplayName("a listagem do catalogo monta a resposta inteira fora da transacao")
+    @DisplayName("a listagem do catálogo monta a resposta inteira fora da transacao")
     void catalogoForaDaTransacao() throws Exception {
         String token = autenticar();
         long id = criar(token, "Bidu");
@@ -85,7 +85,7 @@ class SemTransacaoDeTesteIT {
         mockMvc.perform(get("/api/v1/animais/" + id))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.abrigo.nome").isNotEmpty())
-                .andExpect(jsonPath("$.temperamentos[0].rotulo").value("Docil"));
+                .andExpect(jsonPath("$.temperamentos[0].rotulo").value("Dócil"));
     }
 
     @Test
@@ -109,7 +109,7 @@ class SemTransacaoDeTesteIT {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"nome": "Maria", "email": "maria@exemplo.com", "telefone": "21999998888",
-                                 "cidade": "Niteroi", "moradia": "CASA", "areaProtegida": true,
+                                 "cidade": "Niterói", "moradia": "CASA", "areaProtegida": true,
                                  "temOutrosAnimais": false}"""))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.animalNome").value("Tobias"));
@@ -125,7 +125,7 @@ class SemTransacaoDeTesteIT {
     }
 
     @Test
-    @DisplayName("alterar e excluir tambem respondem sem sessao aberta")
+    @DisplayName("alterar e excluir também respondem sem sessao aberta")
     void alterarEExcluirForaDaTransacao() throws Exception {
         String token = autenticar();
         long id = criar(token, "Nina");
@@ -186,7 +186,7 @@ class SemTransacaoDeTesteIT {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                         {"nome": "Abrigo Sem Transacao", "email": "%s", "senha": "senhaforte123",
-                         "cidade": "Niteroi"}""".formatted(email)));
+                         "cidade": "Niterói"}""".formatted(email)));
 
         MvcResult login = mockMvc.perform(post("/api/v1/autenticacao/login")
                 .contentType(MediaType.APPLICATION_JSON)

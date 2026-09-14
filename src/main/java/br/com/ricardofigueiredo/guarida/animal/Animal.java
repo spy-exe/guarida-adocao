@@ -152,7 +152,7 @@ public class Animal {
     public void reservar() {
         if (status != StatusAnimal.DISPONIVEL) {
             throw new RegraDeNegocioException(
-                    "So um animal disponivel pode entrar em processo de adocao. Situacao atual: "
+                    "Só um animal disponível pode entrar em processo de adoção. Situação atual: "
                             + status.getRotulo() + ".");
         }
         this.status = StatusAnimal.EM_PROCESSO;
@@ -163,7 +163,7 @@ public class Animal {
     public void concluirAdocao() {
         if (status != StatusAnimal.EM_PROCESSO) {
             throw new RegraDeNegocioException(
-                    "A adocao so pode ser concluida depois de aprovar uma candidatura. Situacao atual: "
+                    "A adoção só pode ser concluída depois de aprovar uma candidatura. Situação atual: "
                             + status.getRotulo() + ".");
         }
         this.status = StatusAnimal.ADOTADO;
@@ -172,7 +172,7 @@ public class Animal {
 
     public void devolverParaAdocao() {
         if (status == StatusAnimal.DISPONIVEL) {
-            throw new RegraDeNegocioException("O animal ja esta disponivel.");
+            throw new RegraDeNegocioException("O animal já esta disponível.");
         }
         this.status = StatusAnimal.DISPONIVEL;
         marcarAlteracao();
@@ -181,7 +181,7 @@ public class Animal {
     /** Tratamento, quarentena ou qualquer motivo que tire o animal da vitrine. */
     public void suspender() {
         if (status == StatusAnimal.ADOTADO) {
-            throw new RegraDeNegocioException("Um animal adotado nao pode ser suspenso.");
+            throw new RegraDeNegocioException("Um animal adotado não pode ser suspenso.");
         }
         this.status = StatusAnimal.INDISPONIVEL;
         marcarAlteracao();
@@ -194,8 +194,8 @@ public class Animal {
     public void exigirQuePodeSerExcluido() {
         if (status == StatusAnimal.ADOTADO) {
             throw new RegraDeNegocioException(
-                    "Animal adotado nao pode ser excluido, porque o registro da adocao se perderia. "
-                            + "Se ele voltou, registre a devolucao.");
+                    "Animal adotado não pode ser excluído, porque o registro da adoção se perderia. "
+                            + "Se ele voltou, registre a devolução.");
         }
     }
 
