@@ -1,199 +1,205 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Baby, Building2, HeartHandshake, LoaderCircle, PawPrint, Search, SearchX } from "lucide-react";
 import CartaoDeAnimal from "@/components/CartaoDeAnimal";
-import Marca from "@/components/Marca";
-import PlaquinhaDeColeira from "@/components/PlaquinhaDeColeira";
-import { api, ErroDaApi, type Animal } from "@/lib/api";
+import IconeDaEspecie from "@/components/IconeDaEspecie";
+import Rodape from "@/components/Rodape";
+import Topo from "@/components/Topo";
+import { api, ErroDaApi, type Animal, type Especie } from "@/lib/api";
+import { tempoNoAbrigo } from "@/lib/formato";
 
-const ESPECIES = [
+const ESPECIES: Array<{ chave: "" | Especie; rotulo: string }> = [
   { chave: "", rotulo: "Todos" },
-  { chave: "CACHORRO", rotulo: "Cachorros" },
+  { chave: "CACHORRO", rotulo: "Cães" },
   { chave: "GATO", rotulo: "Gatos" },
   { chave: "COELHO", rotulo: "Coelhos" },
-  { chave: "PASSARO", rotulo: "Passaros" }
+  { chave: "PASSARO", rotulo: "Aves" }
 ];
 
-const PORTES = [
-  { chave: "", rotulo: "Qualquer porte" },
-  { chave: "PEQUENO", rotulo: "Pequeno" },
-  { chave: "MEDIO", rotulo: "Medio" },
-  { chave: "GRANDE", rotulo: "Grande" }
-];
+/** useSearchParams exige Suspense para a página poder ser pré-renderizada. */
+export default function PaginaInicial() {
+  return (
+    <Suspense fallback={null}>
+      <Catalogo />
+    </Suspense>
+  );
+}
 
-export default function Catalogo() {
+function Catalogo() {
+  const router = useRouter();
+  const parametros = useSearchParams();
+
+  const especie = (parametros.get("especie") ?? "") as "" | Especie;
+  const porte = parametros.get("porte") ?? "";
+  const filhotes = parametros.get("filhotes") === "sim";
+  const busca = parametros.get("busca") ?? "";
+
+  const [texto, setTexto] = useState(busca);
   const [animais, setAnimais] = useState<Animal[]>([]);
   const [total, setTotal] = useState(0);
-  const [disponiveis, setDisponiveis] = useState(0);
-  const [adotados, setAdotados] = useState(0);
-  const [especie, setEspecie] = useState("");
-  const [porte, setPorte] = useState("");
-  const [apenasFilhotes, setApenasFilhotes] = useState(false);
-  const [busca, setBusca] = useState("");
-  const [buscaAplicada, setBuscaAplicada] = useState("");
+  const [numeros, setNumeros] = useState({ esperando: 0, adotados: 0 });
+  const [destaques, setDestaques] = useState<Animal[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
 
-  const carregar = useCallback(async () => {
+  /** Filtro vive na URL: dá para voltar, recarregar e mandar o link para alguém. */
+  const filtrar = useCallback((mudancas: Record<string, string>) => {
+    const proximos = new URLSearchParams(parametros.toString());
+    Object.entries(mudancas).forEach(([chave, valor]) => (valor ? proximos.set(chave, valor) : proximos.delete(chave)));
+    router.replace(`/?${proximos}`, { scroll: false });
+  }, [parametros, router]);
+
+  useEffect(() => {
+    let ativo = true;
     setCarregando(true);
     setErro(null);
 
-    try {
-      const [pagina, comDisponiveis, comAdotados] = await Promise.all([
-        api.catalogo({
-          especie: especie || undefined,
-          porte: porte || undefined,
-          apenasFilhotes: apenasFilhotes || undefined,
-          busca: buscaAplicada || undefined,
-          status: "DISPONIVEL",
-          tamanho: 24
-        }),
-        api.catalogo({ status: "DISPONIVEL", tamanho: 1 }),
-        api.catalogo({ status: "ADOTADO", tamanho: 1 })
-      ]);
+    api.catalogo({ especie: especie || undefined, porte: porte || undefined, apenasFilhotes: filhotes || undefined,
+                   busca: busca || undefined, status: "DISPONIVEL", tamanho: 24 })
+      .then((pagina) => {
+        if (!ativo) return;
+        setAnimais(pagina.itens);
+        setTotal(pagina.totalDeItens);
+      })
+      .catch((falha) => ativo && setErro(falha instanceof ErroDaApi ? falha.message : "O catálogo não carregou."))
+      .finally(() => ativo && setCarregando(false));
 
-      setAnimais(pagina.itens);
-      setTotal(pagina.totalDeItens);
-      setDisponiveis(comDisponiveis.totalDeItens);
-      setAdotados(comAdotados.totalDeItens);
-    } catch (falha) {
-      setErro(falha instanceof ErroDaApi ? falha.message : "Nao foi possivel carregar o catalogo.");
-    } finally {
-      setCarregando(false);
-    }
-  }, [especie, porte, apenasFilhotes, buscaAplicada]);
+    return () => { ativo = false; };
+  }, [especie, porte, filhotes, busca]);
 
   useEffect(() => {
-    void carregar();
-  }, [carregar]);
+    Promise.all([
+      api.catalogo({ status: "DISPONIVEL", tamanho: 60 }),
+      api.catalogo({ status: "ADOTADO", tamanho: 1 })
+    ]).then(([disponiveis, adotados]) => {
+      setNumeros({ esperando: disponiveis.totalDeItens, adotados: adotados.totalDeItens });
+      // a lista abaixo começa pelos que chegaram agora; o destaque fica com quem espera há mais tempo
+      setDestaques(disponiveis.itens.filter((animal) => animal.foto)
+        .sort((a, b) => a.dataDeEntrada.localeCompare(b.dataDeEntrada))
+        .slice(0, 3));
+    }).catch(() => undefined);
+  }, []);
+
+  const tituloDaLista = useMemo(() => {
+    if (busca) return `Resultados para “${busca}”`;
+    const escolhida = ESPECIES.find((opcao) => opcao.chave === especie);
+    return especie && escolhida ? `${escolhida.rotulo} esperando casa` : "Esperando casa";
+  }, [busca, especie]);
+
+  const [principal, ...laterais] = destaques;
 
   return (
     <>
-      <header className="topo">
-        <Link href="/">
-          <Marca complemento="abrigo e adocao" />
+      <Topo complemento="adoção de animais">
+        <a className="topo-link" href="/swagger-ui.html"><span>API</span></a>
+        <Link className="botao" data-tom="neutro" data-tamanho="pequeno" href="/entrar">
+          <Building2 size={15} aria-hidden="true" />Sou de um abrigo
         </Link>
-        <nav className="topo-nav">
-          <a href="/swagger-ui.html">API</a>
-          <Link className="botao" data-tom="vazado" href="/entrar">
-            Entrar como abrigo
-          </Link>
-        </nav>
-      </header>
+      </Topo>
 
       <main className="corpo">
         <section className="vitrine">
           <div className="vitrine-texto">
-            <span className="etiqueta entra">Adocao responsavel</span>
-            <h1 className="entra" style={{ animationDelay: "70ms" }}>
-              Todo bicho daqui tem nome, ficha e historia.
-            </h1>
-            <p className="entra" style={{ animationDelay: "140ms" }}>
-              Cada animal chega com data de entrada, peso, vacina e temperamento anotados. Voce escolhe
-              pelo que combina com a sua casa, manda um pedido e o abrigo responde.
+            <h1>Adote um bicho que já tem nome e história.</h1>
+            <p>
+              Cada animal aqui tem ficha com idade, vacinas e jeito de ser anotados por quem cuida dele.
+              Escolha pelo que combina com a sua casa e mande um pedido. Não precisa criar conta.
             </p>
 
-            <div className="vitrine-numeros entra" style={{ animationDelay: "210ms" }}>
-              <div className="vitrine-numero">
-                <strong className="numero">{disponiveis}</strong>
-                <span>esperando casa</span>
-              </div>
-              <div className="vitrine-numero">
-                <strong className="numero">{adotados}</strong>
-                <span>ja adotados</span>
-              </div>
+            <form className="busca-grande" role="search"
+                  onSubmit={(evento) => { evento.preventDefault(); filtrar({ busca: texto.trim() }); }}>
+              <Search size={18} aria-hidden="true" color="var(--tinta-3)" />
+              <input value={texto} onChange={(e) => setTexto(e.target.value)} aria-label="Buscar por nome, raça ou história"
+                     placeholder="Nome, raça ou algo da história" />
+              <button className="botao" type="submit">Buscar</button>
+            </form>
+
+            <div className="fatos">
+              <span className="fato"><PawPrint size={16} aria-hidden="true" /><strong className="numero">{numeros.esperando}</strong> esperando casa</span>
+              <span className="fato"><HeartHandshake size={16} aria-hidden="true" /><strong className="numero">{numeros.adotados}</strong> já adotados</span>
             </div>
           </div>
 
-          <div className="vitrine-palco">
-            <PlaquinhaDeColeira nome="Guarida" linhaDeBaixo="abrigo e adocao" altura={340} />
-            <p className="dica-arraste">Arraste a plaquinha</p>
+          <div className="mosaico" aria-hidden={destaques.length === 0}>
+            {principal ? (
+              <>
+                <Link className="mosaico-item" href={`/animal/${principal.id}`}>
+                  <img src={principal.foto!.url} alt={`${principal.nome}, ${principal.especieRotulo.toLowerCase()}`} />
+                  <span className="mosaico-legenda"><strong>{principal.nome}</strong>, esperando {tempoNoAbrigo(principal.dataDeEntrada)}</span>
+                </Link>
+                {laterais.map((animal) => (
+                  <Link className="mosaico-item" key={animal.id} href={`/animal/${animal.id}`}>
+                    <img src={animal.foto!.url} alt={`${animal.nome}, ${animal.especieRotulo.toLowerCase()}`} loading="lazy" />
+                    <span className="mosaico-legenda"><strong>{animal.nome}</strong>, {tempoNoAbrigo(animal.dataDeEntrada)}</span>
+                  </Link>
+                ))}
+              </>
+            ) : (
+              <>
+                <div className="mosaico-item esqueleto" />
+                <div className="mosaico-item esqueleto" />
+                <div className="mosaico-item esqueleto" />
+              </>
+            )}
           </div>
         </section>
 
-        <div className="cabecalho-secao">
-          <div>
-            <span className="etiqueta">Disponiveis agora</span>
-            <h2>Quem esta esperando</h2>
+        <section aria-labelledby="titulo-lista">
+          <div className="cabecalho-secao">
+            <div>
+              <h2 id="titulo-lista">{tituloDaLista}</h2>
+              <p className="numero">{carregando ? "Procurando…" : `${total} ${total === 1 ? "animal encontrado" : "animais encontrados"}`}</p>
+            </div>
           </div>
-          <span className="etiqueta">{total} no filtro</span>
-        </div>
 
-        <form
-          className="barra-de-busca"
-          onSubmit={(evento) => {
-            evento.preventDefault();
-            setBuscaAplicada(busca);
-          }}
-        >
-          <label className="campo">
-            <span>Buscar</span>
-            <input
-              value={busca}
-              onChange={(evento) => setBusca(evento.target.value)}
-              placeholder="nome, raca ou historia"
-            />
-          </label>
-
-          <label className="campo">
-            <span>Porte</span>
-            <select value={porte} onChange={(evento) => setPorte(evento.target.value)}>
-              {PORTES.map((opcao) => (
-                <option key={opcao.chave || "qualquer"} value={opcao.chave}>
+          <div className="barra-filtros">
+            <div className="opcoes" role="group" aria-label="Espécie">
+              {ESPECIES.map((opcao) => (
+                <button key={opcao.chave || "todos"} type="button" className="opcao" aria-pressed={especie === opcao.chave}
+                        onClick={() => filtrar({ especie: opcao.chave })}>
+                  {opcao.chave && <IconeDaEspecie especie={opcao.chave} size={15} />}
                   {opcao.rotulo}
-                </option>
+                </button>
               ))}
-            </select>
-          </label>
-
-          <button className="botao" data-tom="vazado" type="submit">
-            Filtrar
-          </button>
-
-          <button
-            className="filtro"
-            type="button"
-            data-ativo={apenasFilhotes ? "sim" : "nao"}
-            onClick={() => setApenasFilhotes((atual) => !atual)}
-          >
-            So filhotes
-          </button>
-        </form>
-
-        <div className="filtros">
-          {ESPECIES.map((opcao) => (
-            <button
-              key={opcao.chave || "todos"}
-              className="filtro"
-              type="button"
-              data-ativo={especie === opcao.chave ? "sim" : "nao"}
-              onClick={() => setEspecie(opcao.chave)}
-            >
-              {opcao.rotulo}
+            </div>
+            <span className="separador" aria-hidden="true" />
+            <button type="button" className="opcao" aria-pressed={filhotes} onClick={() => filtrar({ filhotes: filhotes ? "" : "sim" })}>
+              <Baby size={15} aria-hidden="true" />Filhotes
             </button>
-          ))}
-        </div>
-
-        {erro && <p className="aviso">{erro}</p>}
-
-        {carregando ? (
-          <p className="carregando">Carregando</p>
-        ) : animais.length === 0 ? (
-          <div className="vazio">
-            <p>
-              Nenhum animal com esses filtros agora. Tire um filtro ou volte outro dia: a lista muda
-              toda semana.
-            </p>
+            <select className="opcao" value={porte} aria-label="Porte" onChange={(e) => filtrar({ porte: e.target.value })}>
+              <option value="">Qualquer porte</option>
+              <option value="PEQUENO">Porte pequeno</option>
+              <option value="MEDIO">Porte médio</option>
+              <option value="GRANDE">Porte grande</option>
+            </select>
+            {(busca || especie || porte || filhotes) && (
+              <button type="button" className="botao" data-tom="neutro" data-tamanho="pequeno"
+                      onClick={() => { setTexto(""); router.replace("/", { scroll: false }); }}>
+                Limpar filtros
+              </button>
+            )}
           </div>
-        ) : (
-          <div className="grade">
-            {animais.map((animal, indice) => (
-              <CartaoDeAnimal animal={animal} indice={indice} key={animal.id} />
-            ))}
-          </div>
-        )}
+
+          {erro ? (
+            <p className="aviso" role="alert">{erro}</p>
+          ) : carregando && animais.length === 0 ? (
+            <div className="carregando"><LoaderCircle size={18} className="girando" aria-hidden="true" />Carregando</div>
+          ) : animais.length === 0 ? (
+            <div className="vazio">
+              <SearchX size={26} aria-hidden="true" />
+              <p>Nenhum animal com esses filtros agora. Tente tirar um filtro: chega bicho novo toda semana.</p>
+            </div>
+          ) : (
+            <div className="grade">
+              {animais.map((animal, indice) => <CartaoDeAnimal key={animal.id} animal={animal} prioridade={indice < 4} />)}
+            </div>
+          )}
+        </section>
       </main>
+      <Rodape />
     </>
   );
 }

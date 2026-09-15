@@ -1,34 +1,18 @@
 import type { Metadata } from "next";
-import { Azeret_Mono, Fraunces, Karla } from "next/font/google";
+import { Fraunces, Geist } from "next/font/google";
 import "./globals.css";
 
-const display = Fraunces({
-  subsets: ["latin"],
-  variable: "--fonte-fraunces",
-  display: "swap"
-});
-
-const texto = Karla({
-  subsets: ["latin"],
-  variable: "--fonte-karla",
-  display: "swap"
-});
-
-const mono = Azeret_Mono({
-  subsets: ["latin"],
-  variable: "--fonte-azeret",
-  display: "swap"
-});
+const titulo = Fraunces({ subsets: ["latin"], variable: "--fonte-fraunces", display: "swap" });
+const texto = Geist({ subsets: ["latin"], variable: "--fonte-geist", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "Guarida - abrigo e adocao",
-  description:
-    "Catalogo de animais para adocao e painel do abrigo: cadastro, consulta, alteracao e exclusao."
+  title: "Guarida · adoção de animais",
+  description: "Animais esperando adoção em abrigos da região, com ficha, história e fotos. Mande seu pedido sem criar conta."
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className={`${display.variable} ${texto.variable} ${mono.variable}`}>
+    <html lang="pt-BR" className={`${titulo.variable} ${texto.variable}`}>
       <body>{children}</body>
     </html>
   );

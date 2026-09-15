@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
+import { arrastar, avancar, emRepouso, type EstadoDoPendulo } from "@/lib/pendulo";
 
 /*
   A unica peca em tres dimensoes do sistema e a plaquinha de coleira, porque e
@@ -21,7 +22,6 @@ import * as THREE from "three";
 
 const RAIO_DA_PECA = 0.86;
 const COMPRIMENTO_DO_FIO = 1.35;
-const GRAVIDADE = 9.81;
 
 const VERTICE = /* glsl */ `
   varying vec2 vUv;
@@ -140,15 +140,15 @@ function desenharFace(canvas: HTMLCanvasElement, linhas: string[], fonteDisplay:
     }
   } else {
     gravar("GUARIDA", lado * 0.40, lado * 0.078, fonteDisplay, lado * 0.014);
-    gravar("ABRIGO E ADOCAO", lado * 0.52, lado * 0.040, fonteMono, lado * 0.012);
-    gravar("SE ME ACHAR", lado * 0.66, lado * 0.038, fonteMono, lado * 0.010);
-    gravar("LEVE PARA CASA", lado * 0.73, lado * 0.038, fonteMono, lado * 0.010);
+    gravar("ABRIGO E ADOÇÃO", lado * 0.52, lado * 0.040, fonteMono, lado * 0.012);
+    gravar("SE EU ME PERDER", lado * 0.66, lado * 0.038, fonteMono, lado * 0.010);
+    gravar("LIGUE PARA O ABRIGO", lado * 0.73, lado * 0.038, fonteMono, lado * 0.010);
   }
 }
 
 export default function PlaquinhaDeColeira({
   nome = "GUARIDA",
-  linhaDeBaixo = "ABRIGO E ADOCAO",
+  linhaDeBaixo = "ABRIGO E ADOÇÃO",
   identificador,
   altura = "100%"
 }: Props) {
@@ -183,7 +183,7 @@ export default function PlaquinhaDeColeira({
       do espaco que o conjunto ocupa, pelos dois eixos, e fica com a maior das
       duas exigencias.
     */
-    const ALTURA_DO_CONJUNTO = RAIO_DA_PECA * 2 + 1.05;
+    const ALTURA_DO_CONJUNTO = COMPRIMENTO_DO_FIO + 0.22 + RAIO_DA_PECA - 0.06;
     const LARGURA_DO_CONJUNTO = RAIO_DA_PECA * 2 + 0.5;
 
     function enquadrar() {
@@ -191,8 +191,12 @@ export default function PlaquinhaDeColeira({
       const porAltura = (ALTURA_DO_CONJUNTO / 2) / Math.tan(meioAngulo);
       const porLargura = (LARGURA_DO_CONJUNTO / 2) / Math.tan(meioAngulo) / Math.max(camera.aspect, 0.2);
 
-      camera.position.set(0, -COMPRIMENTO_DO_FIO + RAIO_DA_PECA * 0.1,
-              Math.max(porAltura, porLargura) * 1.08);
+      // mira no meio do conjunto, da argola até a borda de baixo da peça, para nada sair cortado
+      const topo = COMPRIMENTO_DO_FIO + 0.22;
+      const base = 0.06 - RAIO_DA_PECA;
+      const meio = (topo + base) / 2;
+      camera.position.set(0, meio, Math.max(porAltura, porLargura) * 1.08);
+      camera.lookAt(0, meio, 0);
       camera.updateProjectionMatrix();
     }
 
@@ -252,11 +256,19 @@ export default function PlaquinhaDeColeira({
     elo.rotation.x = Math.PI / 2.2;
     suspensao.add(elo);
 
+    // o fio liga a argola ao elo; sem ele a peça parece flutuar solta
+    const inicioDoFio = -0.2;
+    const fimDoFio = -COMPRIMENTO_DO_FIO + RAIO_DA_PECA + 0.1;
+    const fio = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.014, 0.014, inicioDoFio - fimDoFio, 8),
+      new THREE.MeshBasicMaterial({ color: "#8f9386" })
+    );
+    fio.position.set(0, (inicioDoFio + fimDoFio) / 2, 0);
+    suspensao.add(fio);
+
     // estado do pendulo
-    let angulo = 0.16;
-    let velocidade = 0;
-    let giro = 0;
-    let velocidadeDoGiro = 0;
+    // a fisica mora em lib/pendulo.ts, onde tem teste; aqui so se aplica o estado
+    let estado: EstadoDoPendulo = { angulo: 0.16, velocidade: 0, giro: 0, velocidadeDoGiro: 0 };
 
     let arrastando = false;
     const ultimo = { x: 0, y: 0 };
@@ -269,8 +281,7 @@ export default function PlaquinhaDeColeira({
       arrastando = true;
       ultimo.x = evento.clientX;
       ultimo.y = evento.clientY;
-      velocidade = 0;
-      velocidadeDoGiro = 0;
+      estado = { ...estado, velocidade: 0, velocidadeDoGiro: 0 };
       tela.style.cursor = "grabbing";
       tela.setPointerCapture(evento.pointerId);
     }
@@ -283,11 +294,7 @@ export default function PlaquinhaDeColeira({
       ultimo.x = evento.clientX;
       ultimo.y = evento.clientY;
 
-      // arrasto lateral empurra o pendulo, arrasto vertical gira no proprio eixo
-      velocidade = -dx * 0.012;
-      velocidadeDoGiro = dy * 0.010;
-      angulo = Math.max(-1.15, Math.min(1.15, angulo + velocidade));
-      giro += velocidadeDoGiro;
+      estado = arrastar(estado, dx, dy);
     }
 
     function aoSoltar(evento: PointerEvent) {
@@ -308,34 +315,22 @@ export default function PlaquinhaDeColeira({
     function desenhar() {
       quadro = requestAnimationFrame(desenhar);
 
-      const passo = Math.min(relogio.getDelta(), 0.05);
+      const passo = relogio.getDelta();
 
       if (!arrastando) {
-        // pendulo simples com atrito: o seno e o que faz ele desacelerar no alto
-        const aceleracao = -(GRAVIDADE / (COMPRIMENTO_DO_FIO * 6.0)) * Math.sin(angulo)
-                - 0.9 * velocidade;
-        velocidade += aceleracao * passo;
-        angulo += velocidade * passo;
-
-        velocidadeDoGiro *= 0.975;
-        giro += velocidadeDoGiro;
-
-        if (Math.abs(velocidadeDoGiro) < 0.00004) velocidadeDoGiro = 0;
+        estado = avancar(estado, passo);
       }
 
-      const emRepouso = !arrastando && Math.abs(velocidade) < 0.0008
-              && Math.abs(angulo) < 0.004 && velocidadeDoGiro === 0;
-
-      if (paradoPorPreferencia && emRepouso) {
+      if (paradoPorPreferencia && !arrastando && emRepouso(estado)) {
         return;
       }
       if (!paradoPorPreferencia) {
         material.uniforms.uTempo.value = relogio.getElapsedTime();
       }
 
-      suspensao.rotation.z = angulo;
-      peca.rotation.y = giro;
-      elo.rotation.y = giro;
+      suspensao.rotation.z = estado.angulo;
+      peca.rotation.y = estado.giro;
+      elo.rotation.y = estado.giro;
 
       renderizador.render(cena, camera);
     }
@@ -351,8 +346,11 @@ export default function PlaquinhaDeColeira({
 
     pintar.current = () => {
       const raiz = getComputedStyle(document.documentElement);
-      const fonteDisplay = raiz.getPropertyValue("--fonte-display").trim() || "Georgia, serif";
-      const fonteMono = raiz.getPropertyValue("--fonte-mono").trim() || "ui-monospace, monospace";
+      // o canvas não resolve var(), então lê direto a família que o next/font registrou
+      const fraunces = raiz.getPropertyValue("--fonte-fraunces").trim();
+      const geist = raiz.getPropertyValue("--fonte-geist").trim();
+      const fonteDisplay = fraunces ? `${fraunces}, Georgia, serif` : "Georgia, serif";
+      const fonteMono = geist ? `${geist}, system-ui, sans-serif` : "system-ui, sans-serif";
 
       desenharFace(frente, [
         alvo.dataset.nome ?? "",
@@ -371,8 +369,7 @@ export default function PlaquinhaDeColeira({
     }
 
     if (paradoPorPreferencia) {
-      angulo = 0.05;
-      velocidade = 0;
+      estado = { ...estado, angulo: 0.05, velocidade: 0 };
       material.uniforms.uTempo.value = 2.2;
     }
 
@@ -389,6 +386,7 @@ export default function PlaquinhaDeColeira({
       peca.geometry.dispose();
       argola.geometry.dispose();
       elo.geometry.dispose();
+      fio.geometry.dispose();
       material.dispose();
       texturaFrente.dispose();
       texturaVerso.dispose();

@@ -1,11 +1,11 @@
 import type { Especie } from "@/lib/api";
 
 /*
-  O abrigo nao tem foto de todo animal, e foto de banco de imagem mentiria
-  sobre quem esta ali. Em vez disso cada especie tem um retrato geometrico
-  proprio, montado com formas simples para ficar nitido em qualquer tamanho, e
-  o fundo de cada ficha ganha um matiz derivado do id: dois animais nunca saem
-  iguais na tela, e nenhum deles finge ser uma fotografia.
+  Quando o abrigo ainda não mandou foto, ou a foto falha ao carregar, cada
+  espécie tem um retrato geométrico próprio, montado com formas simples para
+  ficar nítido em qualquer tamanho. É desenho assumido, e não imagem de banco
+  fingindo ser o animal: quem descreve o bicho para o leitor de tela é quem usa
+  o retrato, então o SVG em si fica escondido da árvore de acessibilidade.
 */
 
 function Cachorro() {
@@ -92,7 +92,7 @@ export default function Retrato({ especie, cor }: { especie: Especie; cor?: stri
   const Desenho = RETRATOS[especie] ?? Pata;
 
   return (
-    <svg viewBox="0 0 100 100" role="img" aria-label={`Ilustracao de ${especie.toLowerCase()}`}
+    <svg viewBox="0 0 100 100" aria-hidden="true" data-especie={especie}
          style={{ color: cor ?? "var(--musgo)" }}>
       <Desenho />
     </svg>

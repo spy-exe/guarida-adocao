@@ -1,43 +1,29 @@
 import Link from "next/link";
-import Retrato from "@/components/Retrato";
+import { MapPin, Mars, Venus } from "lucide-react";
+import FotoDoAnimal from "@/components/FotoDoAnimal";
 import SeloDeSituacao from "@/components/SeloDeSituacao";
 import type { Animal } from "@/lib/api";
-import { matizDoAnimal, peso, rotuloCurto } from "@/lib/formato";
 
-export default function CartaoDeAnimal({ animal, indice = 0 }: { animal: Animal; indice?: number }) {
+export default function CartaoDeAnimal({ animal, prioridade = false }: { animal: Animal; prioridade?: boolean }) {
+  const Sexo = animal.sexo === "FEMEA" ? Venus : Mars;
+
   return (
-    <Link
-      className="cartao entra"
-      style={{ animationDelay: `${Math.min(indice, 10) * 40}ms` }}
-      href={`/animal/${animal.id}`}
-    >
-      <div className="cartao-retrato" style={{ background: matizDoAnimal(animal.id) }}>
-        <Retrato especie={animal.especie} />
+    <Link className="cartao" href={`/animal/${animal.id}`}>
+      <div className="cartao-foto">
+        <FotoDoAnimal animal={animal} prioridade={prioridade} tamanhos="(max-width: 640px) 100vw, 280px" />
+        {animal.status !== "DISPONIVEL" && <SeloDeSituacao status={animal.status} rotulo={animal.statusRotulo} curto />}
       </div>
 
-      <div className="cartao-dados">
+      <div className="cartao-corpo">
         <div className="cartao-nome">
           <h3>{animal.nome}</h3>
-          <SeloDeSituacao status={animal.status} rotulo={rotuloCurto(animal.statusRotulo)} />
+          <span className="cartao-idade">{animal.idadeRotulo}</span>
         </div>
-
-        <span className="cartao-linha">
-          {animal.especieRotulo} · {animal.sexoRotulo} · {animal.porteRotulo}
-        </span>
-        <span className="cartao-linha">
-          {animal.idadeRotulo} · {peso(animal.pesoEmGramas)}
-          {animal.raca ? ` · ${animal.raca}` : ""}
-        </span>
-
-        {animal.temperamentos.length > 0 && (
-          <div className="cartao-tracos">
-            {animal.temperamentos.slice(0, 3).map((traco) => (
-              <span className="traco" key={traco.chave}>
-                {traco.rotulo}
-              </span>
-            ))}
-          </div>
-        )}
+        <div className="meta">
+          <span><Sexo size={14} aria-hidden="true" />{animal.sexoRotulo}</span>
+          <span>Porte {animal.porteRotulo.toLowerCase()}</span>
+          <span><MapPin size={14} aria-hidden="true" />{animal.abrigo.cidade}</span>
+        </div>
       </div>
     </Link>
   );

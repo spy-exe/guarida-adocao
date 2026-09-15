@@ -10,6 +10,13 @@ export interface Traco {
   rotulo: string;
 }
 
+export interface Foto {
+  url: string;
+  autor?: string;
+  licenca?: string;
+  fonte?: string;
+}
+
 export interface Animal {
   id: number;
   nome: string;
@@ -37,6 +44,7 @@ export interface Animal {
   abrigo: { id: number; nome: string; cidade: string };
   criadoEm: string;
   atualizadoEm: string;
+  foto?: Foto;
 }
 
 export interface Evento {
@@ -124,13 +132,15 @@ export class ErroDaApi extends Error {
 interface Opcoes {
   metodo?: "GET" | "POST" | "PUT" | "DELETE";
   corpo?: unknown;
+  formulario?: FormData;
   token?: string;
 }
 
 async function requisicao<T>(caminho: string, opcoes: Opcoes = {}): Promise<T> {
   const cabecalhos: Record<string, string> = {};
 
-  if (opcoes.corpo !== undefined) {
+  // FormData leva o proprio Content-Type com o boundary; escrever na mao quebraria o envio
+  if (opcoes.corpo !== undefined && !opcoes.formulario) {
     cabecalhos["Content-Type"] = "application/json";
   }
   if (opcoes.token) {
@@ -142,14 +152,20 @@ async function requisicao<T>(caminho: string, opcoes: Opcoes = {}): Promise<T> {
     resposta = await fetch(caminho, {
       method: opcoes.metodo ?? "GET",
       headers: cabecalhos,
-      body: opcoes.corpo === undefined ? undefined : JSON.stringify(opcoes.corpo)
+      body: opcoes.formulario ?? (opcoes.corpo === undefined ? undefined : JSON.stringify(opcoes.corpo))
     });
   } catch {
-    throw new ErroDaApi("Nao foi possivel falar com a API. Verifique se ela esta no ar.", 0);
+    throw new ErroDaApi("Não foi possível falar com a API. Confira sua conexão e tente de novo.", 0);
   }
 
   const texto = await resposta.text();
-  const dados = texto ? JSON.parse(texto) : null;
+  let dados: any = null;
+  try {
+    dados = texto ? JSON.parse(texto) : null;
+  } catch {
+    // resposta que nao e JSON, como a pagina de erro de um proxy no meio do caminho
+    dados = null;
+  }
 
   if (!resposta.ok) {
     const detalhe: string = dados?.detail ?? dados?.title ?? `Erro ${resposta.status}`;
@@ -278,6 +294,26 @@ export const api = {
 
   concluirAdocao(token: string, id: number) {
     return requisicao<Candidatura>(`/api/v1/candidaturas/${id}/adocao`, { metodo: "POST", token });
+  },
+
+  enviarFoto(token: string, id: number | string, arquivo: File,
+             credito: { autor?: string; licenca?: string; fonte?: string } = {}) {
+    const formulario = new FormData();
+    formulario.append("arquivo", arquivo);
+    const busca = new URLSearchParams();
+    if (credito.autor) busca.set("autor", credito.autor);
+    if (credito.licenca) busca.set("licenca", credito.licenca);
+    if (credito.fonte) busca.set("fonte", credito.fonte);
+    const sufixo = busca.toString() ? `?${busca}` : "";
+    return requisicao<Foto>(`/api/v1/animais/${id}/foto${sufixo}`, {
+      metodo: "PUT",
+      formulario,
+      token
+    });
+  },
+
+  removerFoto(token: string, id: number | string) {
+    return requisicao<void>(`/api/v1/animais/${id}/foto`, { metodo: "DELETE", token });
   },
 
   devolver(token: string, id: number | string, motivo?: string) {

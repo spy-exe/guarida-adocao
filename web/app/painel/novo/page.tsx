@@ -3,19 +3,16 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import FormularioDeAnimal, {
-  corpoDaRequisicao,
-  dadosIniciais,
-  type DadosDoFormulario
-} from "@/components/FormularioDeAnimal";
+import { ChevronLeft, LoaderCircle } from "lucide-react";
+import FormularioDeAnimal, { corpoDaRequisicao, dadosIniciais, type DadosDoFormulario } from "@/components/FormularioDeAnimal";
 import Retrato from "@/components/Retrato";
-import { api, ErroDaApi, type Especie } from "@/lib/api";
+import { api, ErroDaApi } from "@/lib/api";
 import { lerSessao } from "@/lib/sessao";
 
 export default function NovoAnimal() {
   const router = useRouter();
-  const [dados, setDados] = useState<DadosDoFormulario>(dadosIniciais());
-  const [campos, setCampos] = useState<Record<string, string>>({});
+  const [dados, setDados] = useState<DadosDoFormulario>(() => dadosIniciais());
+  const [erros, setErros] = useState<Record<string, string>>({});
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
 
@@ -25,18 +22,18 @@ export default function NovoAnimal() {
     if (!sessao) return;
 
     setErro(null);
-    setCampos({});
+    setErros({});
     setEnviando(true);
-
     try {
       const animal = await api.cadastrarAnimal(sessao.token, corpoDaRequisicao(dados, true));
-      router.push(`/painel/${animal.id}`);
+      // a foto só pode subir depois que o animal existe, então a ficha abre já no envio de foto
+      router.push(`/painel/${animal.id}?novo=sim`);
     } catch (falha) {
       if (falha instanceof ErroDaApi) {
-        setErro(falha.message);
-        setCampos(falha.campos);
+        setErro(Object.keys(falha.campos).length ? "Confira os campos marcados." : falha.message);
+        setErros(falha.campos);
       } else {
-        setErro("Nao foi possivel cadastrar o animal.");
+        setErro("O cadastro não foi salvo. Tente de novo.");
       }
       setEnviando(false);
     }
@@ -44,39 +41,39 @@ export default function NovoAnimal() {
 
   return (
     <>
-      <div className="cabecalho-secao">
-        <div>
-          <span className="etiqueta">Novo cadastro</span>
-          <h2>Cadastrar animal</h2>
-        </div>
-        <Link className="botao" data-tom="vazado" href="/painel">
-          Voltar
-        </Link>
-      </div>
+      <nav className="migalha" aria-label="Você está em">
+        <Link href="/painel"><ChevronLeft size={15} aria-hidden="true" style={{ verticalAlign: "-3px" }} />Acervo</Link>
+        <span>/</span>
+        <span>Novo animal</span>
+      </nav>
 
       <div className="ficha">
-        <form className="formulario" onSubmit={enviar} style={{ order: 2 }}>
-          <FormularioDeAnimal dados={dados} aoMudar={setDados} campos={campos} mostrarEntrada />
-
-          {erro && <p className="aviso">{erro}</p>}
-
-          <button className="botao" type="submit" disabled={enviando}>
-            {enviando ? "Cadastrando" : "Cadastrar animal"}
-          </button>
+        <form className="formulario painel-caixa" onSubmit={enviar} noValidate>
+          <h1 style={{ fontSize: "2rem" }}>Cadastrar animal</h1>
+          <FormularioDeAnimal dados={dados} aoMudar={setDados} erros={erros} mostrarEntrada />
+          {erro && <p className="aviso" role="alert">{erro}</p>}
+          <div className="acoes">
+            <button className="botao" type="submit" disabled={enviando}>
+              {enviando && <LoaderCircle size={16} className="girando" aria-hidden="true" />}
+              {enviando ? "Salvando" : "Salvar e seguir para a foto"}
+            </button>
+            <Link className="botao" data-tom="neutro" href="/painel">Cancelar</Link>
+          </div>
         </form>
 
-        <aside className="caixa-lateral" style={{ order: 1, position: "sticky", top: "5.5rem" }}>
-          <h3>Como vai aparecer</h3>
-          <div className="cartao-retrato" style={{ background: "var(--papel)", borderRadius: "4px" }}>
-            <Retrato especie={dados.especie as Especie} />
-          </div>
-          <p>
-            {dados.nome || "Sem nome ainda"}
-            {dados.raca ? `, ${dados.raca}` : ""}
-          </p>
-          <p className="etiqueta">
-            A ficha entra como disponivel, e a entrada no abrigo ja fica registrada na linha do tempo.
-          </p>
+        <aside className="lateral">
+          <section className="painel-caixa">
+            <h3>Como entra no catálogo</h3>
+            <div className="envio-previa" style={{ margin: "0.8rem 0" }}>
+              <div className="retrato" style={{ background: "var(--musgo-claro)", color: "var(--musgo)" }}>
+                <Retrato especie={dados.especie} />
+              </div>
+            </div>
+            <p><strong>{dados.nome.trim() || "Sem nome ainda"}</strong>{dados.raca.trim() ? `, ${dados.raca.trim()}` : ""}</p>
+            <p className="discreto" style={{ marginTop: "0.5rem" }}>
+              A ficha entra como disponível e a chegada ao abrigo já fica na linha do tempo. Na próxima tela dá para mandar a foto.
+            </p>
+          </section>
         </aside>
       </div>
     </>

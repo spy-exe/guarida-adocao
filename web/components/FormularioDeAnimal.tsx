@@ -1,26 +1,34 @@
 "use client";
 
-import { useState } from "react";
-import Retrato from "@/components/Retrato";
+import { Pill, Scissors, Syringe } from "lucide-react";
+import Campo from "@/components/Campo";
+import IconeDaEspecie from "@/components/IconeDaEspecie";
 import type { Animal, Especie } from "@/lib/api";
-import { matizDoAnimal } from "@/lib/formato";
 
-const TRACOS = [
-  { chave: "DOCIL", rotulo: "Docil" },
-  { chave: "BRINCALHAO", rotulo: "Brincalhao" },
-  { chave: "TIMIDO", rotulo: "Timido" },
+export const TRACOS = [
+  { chave: "DOCIL", rotulo: "Dócil" },
+  { chave: "BRINCALHAO", rotulo: "Brincalhão" },
   { chave: "CALMO", rotulo: "Calmo" },
+  { chave: "TIMIDO", rotulo: "Tímido" },
   { chave: "AGITADO", rotulo: "Agitado" },
   { chave: "PROTETOR", rotulo: "Protetor" },
-  { chave: "SOCIAVEL_COM_CAES", rotulo: "Se da bem com caes" },
-  { chave: "SOCIAVEL_COM_GATOS", rotulo: "Se da bem com gatos" },
-  { chave: "BOM_COM_CRIANCAS", rotulo: "Bom com criancas" },
-  { chave: "PRECISA_DE_ESPACO", rotulo: "Precisa de espaco" }
+  { chave: "SOCIAVEL_COM_CAES", rotulo: "Se dá bem com cães" },
+  { chave: "SOCIAVEL_COM_GATOS", rotulo: "Se dá bem com gatos" },
+  { chave: "BOM_COM_CRIANCAS", rotulo: "Bom com crianças" },
+  { chave: "PRECISA_DE_ESPACO", rotulo: "Precisa de espaço" }
+];
+
+const ESPECIES: Array<{ chave: Especie; rotulo: string }> = [
+  { chave: "CACHORRO", rotulo: "Cachorro" },
+  { chave: "GATO", rotulo: "Gato" },
+  { chave: "COELHO", rotulo: "Coelho" },
+  { chave: "PASSARO", rotulo: "Pássaro" },
+  { chave: "OUTRO", rotulo: "Outro" }
 ];
 
 export interface DadosDoFormulario {
   nome: string;
-  especie: string;
+  especie: Especie;
   raca: string;
   sexo: string;
   porte: string;
@@ -35,9 +43,7 @@ export interface DadosDoFormulario {
   temperamentos: string[];
 }
 
-export function dadosIniciais(animal?: Animal): DadosDoFormulario {
-  const hoje = new Date().toISOString().slice(0, 10);
-
+export function dadosIniciais(animal?: Animal, hoje: Date = new Date()): DadosDoFormulario {
   return {
     nome: animal?.nome ?? "",
     especie: animal?.especie ?? "CACHORRO",
@@ -46,7 +52,7 @@ export function dadosIniciais(animal?: Animal): DadosDoFormulario {
     porte: animal?.porte ?? "MEDIO",
     nascimentoEstimado: animal?.nascimentoEstimado ?? "",
     pesoEmGramas: animal ? String(animal.pesoEmGramas) : "",
-    dataDeEntrada: animal?.dataDeEntrada ?? hoje,
+    dataDeEntrada: animal?.dataDeEntrada ?? hoje.toISOString().slice(0, 10),
     historia: animal?.historia ?? "",
     observacoesDeSaude: animal?.observacoesDeSaude ?? "",
     castrado: animal?.castrado ?? false,
@@ -58,174 +64,132 @@ export function dadosIniciais(animal?: Animal): DadosDoFormulario {
 
 export function corpoDaRequisicao(dados: DadosDoFormulario, comEntrada: boolean) {
   const base = {
-    nome: dados.nome,
+    nome: dados.nome.trim(),
     especie: dados.especie,
-    raca: dados.raca || undefined,
+    raca: dados.raca.trim() || undefined,
     sexo: dados.sexo,
     porte: dados.porte,
     nascimentoEstimado: dados.nascimentoEstimado || undefined,
     pesoEmGramas: dados.pesoEmGramas ? Number(dados.pesoEmGramas) : undefined,
-    historia: dados.historia || undefined,
-    observacoesDeSaude: dados.observacoesDeSaude || undefined,
+    historia: dados.historia.trim() || undefined,
+    observacoesDeSaude: dados.observacoesDeSaude.trim() || undefined,
     castrado: dados.castrado,
     vacinado: dados.vacinado,
     vermifugado: dados.vermifugado,
     temperamentos: dados.temperamentos
   };
-
   return comEntrada ? { ...base, dataDeEntrada: dados.dataDeEntrada || undefined } : base;
 }
 
 interface Props {
   dados: DadosDoFormulario;
   aoMudar: (dados: DadosDoFormulario) => void;
-  campos: Record<string, string>;
+  erros: Record<string, string>;
   mostrarEntrada: boolean;
-  idParaRetrato?: number;
 }
 
-export default function FormularioDeAnimal({ dados, aoMudar, campos, mostrarEntrada,
-                                            idParaRetrato = 1 }: Props) {
-  const [expandido, setExpandido] = useState(false);
-
+export default function FormularioDeAnimal({ dados, aoMudar, erros, mostrarEntrada }: Props) {
   function trocar<C extends keyof DadosDoFormulario>(campo: C, valor: DadosDoFormulario[C]) {
     aoMudar({ ...dados, [campo]: valor });
   }
 
   function alternarTraco(chave: string) {
-    const atuais = dados.temperamentos;
-    trocar("temperamentos", atuais.includes(chave)
-      ? atuais.filter((traco) => traco !== chave)
-      : [...atuais, chave]);
+    trocar("temperamentos", dados.temperamentos.includes(chave)
+      ? dados.temperamentos.filter((traco) => traco !== chave)
+      : [...dados.temperamentos, chave]);
   }
 
   return (
     <>
-      <div className="dupla">
-        <label className="campo">
-          <span>Nome</span>
-          <input value={dados.nome} onChange={(e) => trocar("nome", e.target.value)}
-                 placeholder="Bidu" maxLength={60} required />
-          {campos.nome && <em className="campo-erro">{campos.nome}</em>}
-        </label>
-
-        <label className="campo">
-          <span>Especie</span>
-          <select value={dados.especie} onChange={(e) => trocar("especie", e.target.value)}>
-            <option value="CACHORRO">Cachorro</option>
-            <option value="GATO">Gato</option>
-            <option value="COELHO">Coelho</option>
-            <option value="PASSARO">Passaro</option>
-            <option value="OUTRO">Outro</option>
-          </select>
-        </label>
-      </div>
-
-      <div className="tripla">
-        <label className="campo">
-          <span>Raca</span>
-          <input value={dados.raca} onChange={(e) => trocar("raca", e.target.value)}
-                 placeholder="SRD" maxLength={60} />
-        </label>
-
-        <label className="campo">
-          <span>Sexo</span>
-          <select value={dados.sexo} onChange={(e) => trocar("sexo", e.target.value)}>
-            <option value="MACHO">Macho</option>
-            <option value="FEMEA">Femea</option>
-          </select>
-        </label>
-
-        <label className="campo">
-          <span>Porte</span>
-          <select value={dados.porte} onChange={(e) => trocar("porte", e.target.value)}>
-            <option value="PEQUENO">Pequeno</option>
-            <option value="MEDIO">Medio</option>
-            <option value="GRANDE">Grande</option>
-          </select>
-        </label>
-      </div>
-
-      <div className={mostrarEntrada ? "tripla" : "dupla"}>
-        <label className="campo">
-          <span>Nascimento estimado</span>
-          <input type="date" value={dados.nascimentoEstimado}
-                 onChange={(e) => trocar("nascimentoEstimado", e.target.value)} required />
-          {campos.nascimentoEstimado && <em className="campo-erro">{campos.nascimentoEstimado}</em>}
-        </label>
-
-        <label className="campo">
-          <span>Peso em gramas</span>
-          <input inputMode="numeric" value={dados.pesoEmGramas}
-                 onChange={(e) => trocar("pesoEmGramas", e.target.value.replace(/\D/g, ""))}
-                 placeholder="15000" required />
-          {campos.pesoEmGramas && <em className="campo-erro">{campos.pesoEmGramas}</em>}
-        </label>
-
-        {mostrarEntrada && (
-          <label className="campo">
-            <span>Entrada no abrigo</span>
-            <input type="date" value={dados.dataDeEntrada}
-                   onChange={(e) => trocar("dataDeEntrada", e.target.value)} required />
-            {campos.dataDeEntrada && <em className="campo-erro">{campos.dataDeEntrada}</em>}
-          </label>
-        )}
-      </div>
-
-      {campos.entradaDepoisDoNascimento && (
-        <p className="aviso">{campos.entradaDepoisDoNascimento}</p>
-      )}
-
-      <label className="campo">
-        <span>Historia</span>
-        <textarea value={dados.historia} onChange={(e) => trocar("historia", e.target.value)}
-                  maxLength={1000}
-                  placeholder="Como chegou, o que ja passou, do que gosta" />
-      </label>
-
-      <div className="caixas">
-        {(["castrado", "vacinado", "vermifugado"] as const).map((campo) => (
-          <label className="caixa" key={campo} data-marcada={dados[campo] ? "sim" : "nao"}>
-            <input type="checkbox" checked={dados[campo]}
-                   onChange={(e) => trocar(campo, e.target.checked)} />
-            {campo === "castrado" ? "Castrado" : campo === "vacinado" ? "Vacinado" : "Vermifugado"}
-          </label>
-        ))}
-      </div>
+      <Campo id="nome" rotulo="Nome" erro={erros.nome}>
+        <input id="nome" value={dados.nome} maxLength={60} required placeholder="Como o abrigo chama o animal"
+               onChange={(e) => trocar("nome", e.target.value)} />
+      </Campo>
 
       <div className="campo">
-        <span>Temperamento</span>
-        <div className="caixas">
-          {(expandido ? TRACOS : TRACOS.slice(0, 6)).map((traco) => (
-            <button
-              type="button"
-              className="caixa"
-              key={traco.chave}
-              data-marcada={dados.temperamentos.includes(traco.chave) ? "sim" : "nao"}
-              onClick={() => alternarTraco(traco.chave)}
-            >
-              {traco.rotulo}
+        <span className="campo-rotulo" id="rotulo-especie">Espécie</span>
+        <div className="opcoes" role="group" aria-labelledby="rotulo-especie">
+          {ESPECIES.map((opcao) => (
+            <button key={opcao.chave} type="button" className="opcao" aria-pressed={dados.especie === opcao.chave}
+                    onClick={() => trocar("especie", opcao.chave)}>
+              <IconeDaEspecie especie={opcao.chave} size={15} />{opcao.rotulo}
             </button>
           ))}
-          {!expandido && (
-            <button type="button" className="caixa" onClick={() => setExpandido(true)}>
-              mais {TRACOS.length - 6}
-            </button>
-          )}
         </div>
       </div>
 
-      <label className="campo">
-        <span>Observacoes de saude</span>
-        <textarea value={dados.observacoesDeSaude}
-                  onChange={(e) => trocar("observacoesDeSaude", e.target.value)}
-                  maxLength={500}
-                  placeholder="Tratamento em curso, alergia, dieta" />
-      </label>
-
-      <div className="apenas-leitor-de-tela">
-        <Retrato especie={dados.especie as Especie} cor={matizDoAnimal(idParaRetrato)} />
+      <div className="tripla">
+        <Campo id="raca" rotulo="Raça" ajuda="Pode deixar em branco se não souber">
+          <input id="raca" value={dados.raca} maxLength={60} placeholder="Sem raça definida"
+                 onChange={(e) => trocar("raca", e.target.value)} />
+        </Campo>
+        <Campo id="sexo" rotulo="Sexo">
+          <select id="sexo" value={dados.sexo} onChange={(e) => trocar("sexo", e.target.value)}>
+            <option value="MACHO">Macho</option>
+            <option value="FEMEA">Fêmea</option>
+          </select>
+        </Campo>
+        <Campo id="porte" rotulo="Porte">
+          <select id="porte" value={dados.porte} onChange={(e) => trocar("porte", e.target.value)}>
+            <option value="PEQUENO">Pequeno</option>
+            <option value="MEDIO">Médio</option>
+            <option value="GRANDE">Grande</option>
+          </select>
+        </Campo>
       </div>
+
+      <div className={mostrarEntrada ? "tripla" : "dupla"}>
+        <Campo id="nascimento" rotulo="Nascimento estimado" erro={erros.nascimentoEstimado ?? erros.entradaDepoisDoNascimento}>
+          <input id="nascimento" type="date" value={dados.nascimentoEstimado} required
+                 onChange={(e) => trocar("nascimentoEstimado", e.target.value)} />
+        </Campo>
+        <Campo id="peso" rotulo="Peso em gramas" erro={erros.pesoEmGramas} ajuda="Um gato adulto pesa por volta de 4000">
+          <input id="peso" inputMode="numeric" value={dados.pesoEmGramas} required
+                 onChange={(e) => trocar("pesoEmGramas", e.target.value.replace(/\D/g, ""))} />
+        </Campo>
+        {mostrarEntrada && (
+          <Campo id="entrada" rotulo="Chegou ao abrigo em" erro={erros.dataDeEntrada}>
+            <input id="entrada" type="date" value={dados.dataDeEntrada} required
+                   onChange={(e) => trocar("dataDeEntrada", e.target.value)} />
+          </Campo>
+        )}
+      </div>
+
+      <div className="campo">
+        <span className="campo-rotulo" id="rotulo-cuidados">Cuidados já feitos</span>
+        <div className="opcoes" role="group" aria-labelledby="rotulo-cuidados">
+          <button type="button" className="opcao" aria-pressed={dados.vacinado} onClick={() => trocar("vacinado", !dados.vacinado)}>
+            <Syringe size={15} aria-hidden="true" />Vacinado
+          </button>
+          <button type="button" className="opcao" aria-pressed={dados.castrado} onClick={() => trocar("castrado", !dados.castrado)}>
+            <Scissors size={15} aria-hidden="true" />Castrado
+          </button>
+          <button type="button" className="opcao" aria-pressed={dados.vermifugado} onClick={() => trocar("vermifugado", !dados.vermifugado)}>
+            <Pill size={15} aria-hidden="true" />Vermifugado
+          </button>
+        </div>
+      </div>
+
+      <div className="campo">
+        <span className="campo-rotulo" id="rotulo-tracos">Jeito de ser</span>
+        <div className="opcoes" role="group" aria-labelledby="rotulo-tracos">
+          {TRACOS.map((traco) => (
+            <button key={traco.chave} type="button" className="opcao"
+                    aria-pressed={dados.temperamentos.includes(traco.chave)} onClick={() => alternarTraco(traco.chave)}>
+              {traco.rotulo}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <Campo id="historia" rotulo="História" ajuda="Como chegou, do que gosta, o que já passou">
+        <textarea id="historia" value={dados.historia} maxLength={1000} onChange={(e) => trocar("historia", e.target.value)} />
+      </Campo>
+
+      <Campo id="saude" rotulo="Observações de saúde">
+        <textarea id="saude" value={dados.observacoesDeSaude} maxLength={500} placeholder="Tratamento em curso, alergia, dieta"
+                  onChange={(e) => trocar("observacoesDeSaude", e.target.value)} />
+      </Campo>
     </>
   );
 }

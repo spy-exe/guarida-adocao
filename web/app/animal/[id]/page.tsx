@@ -1,315 +1,143 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import LinhaFicha from "@/components/LinhaFicha";
-import Marca from "@/components/Marca";
+import {
+  CalendarDays, ChevronLeft, Hand, House, LoaderCircle, MapPin, Mars, PawPrint, Pill, Ruler,
+  Scissors, Syringe, Venus, Weight
+} from "lucide-react";
+import Credito from "@/components/Credito";
+import FotoDoAnimal from "@/components/FotoDoAnimal";
+import IconeDaEspecie from "@/components/IconeDaEspecie";
+import PedidoDeAdocao from "@/components/PedidoDeAdocao";
 import PlaquinhaDeColeira from "@/components/PlaquinhaDeColeira";
-import Retrato from "@/components/Retrato";
+import Rodape from "@/components/Rodape";
 import SeloDeSituacao from "@/components/SeloDeSituacao";
+import Topo from "@/components/Topo";
 import { api, ErroDaApi, type Animal, type Evento } from "@/lib/api";
-import { data, matizDoAnimal, peso } from "@/lib/formato";
+import { dataPorExtenso, peso, tempoNoAbrigo } from "@/lib/formato";
 
 export default function FichaDoAnimal() {
-  const parametros = useParams<{ id: string }>();
-  const id = parametros.id;
-
+  const { id } = useParams<{ id: string }>();
   const [animal, setAnimal] = useState<Animal | null>(null);
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState<string | null>(null);
-
-  const [nome, setNome] = useState("");
-  const [email, setEmail] = useState("");
-  const [telefone, setTelefone] = useState("");
-  const [cidade, setCidade] = useState("");
-  const [moradia, setMoradia] = useState("CASA");
-  const [areaProtegida, setAreaProtegida] = useState(true);
-  const [temOutrosAnimais, setTemOutrosAnimais] = useState(false);
-  const [mensagem, setMensagem] = useState("");
-  const [campos, setCampos] = useState<Record<string, string>>({});
-  const [enviando, setEnviando] = useState(false);
-  const [protocolo, setProtocolo] = useState<number | null>(null);
-
-  const carregar = useCallback(async () => {
-    try {
-      const [ficha, linha] = await Promise.all([api.animal(id), api.eventos(id)]);
-      setAnimal(ficha);
-      setEventos(linha);
-      setErro(null);
-    } catch (falha) {
-      setErro(falha instanceof ErroDaApi ? falha.message : "Nao foi possivel carregar a ficha.");
-    } finally {
-      setCarregando(false);
-    }
-  }, [id]);
+  const [erroDeCarga, setErroDeCarga] = useState<string | null>(null);
 
   useEffect(() => {
-    void carregar();
-  }, [carregar]);
-
-  async function candidatar(evento: React.FormEvent) {
-    evento.preventDefault();
-    setErro(null);
-    setCampos({});
-    setEnviando(true);
-
-    try {
-      const recebida = await api.candidatar(id, {
-        nome,
-        email,
-        telefone,
-        cidade,
-        moradia,
-        areaProtegida,
-        temOutrosAnimais,
-        mensagem: mensagem || undefined
-      });
-      setProtocolo(recebida.id);
-    } catch (falha) {
-      if (falha instanceof ErroDaApi) {
-        setErro(falha.message);
-        setCampos(falha.campos);
-      } else {
-        setErro("Nao foi possivel enviar o pedido.");
-      }
-    } finally {
-      setEnviando(false);
-    }
-  }
-
-  if (carregando) {
-    return <p className="carregando">Carregando</p>;
-  }
-
-  if (!animal) {
-    return (
-      <main className="corpo">
-        <div className="vazio">
-          <p>{erro ?? "Animal nao encontrado."}</p>
-          <Link className="botao" href="/">
-            Voltar para o catalogo
-          </Link>
-        </div>
-      </main>
-    );
-  }
-
-  const disponivel = animal.status === "DISPONIVEL";
+    Promise.all([api.animal(id), api.eventos(id)])
+      .then(([ficha, linha]) => { setAnimal(ficha); setEventos(linha); })
+      .catch((falha) => setErroDeCarga(falha instanceof ErroDaApi ? falha.message : "A ficha não carregou."))
+      .finally(() => setCarregando(false));
+  }, [id]);
 
   return (
     <>
-      <header className="topo">
-        <Link href="/">
-          <Marca complemento="abrigo e adocao" />
-        </Link>
-        <nav className="topo-nav">
-          <Link href="/">Catalogo</Link>
-          <Link className="botao" data-tom="vazado" href="/entrar">
-            Entrar como abrigo
-          </Link>
-        </nav>
-      </header>
+      <Topo complemento="adoção de animais">
+        <Link className="topo-link" href="/"><PawPrint size={16} aria-hidden="true" /><span>Catálogo</span></Link>
+      </Topo>
 
       <main className="corpo">
-        <div className="cabecalho-secao">
-          <div>
-            <span className="etiqueta">
-              <Link href="/">Catalogo</Link> / ficha {animal.id}
-            </span>
-            <h2>{animal.nome}</h2>
+        {carregando ? (
+          <div className="carregando"><LoaderCircle size={18} className="girando" aria-hidden="true" />Carregando a ficha</div>
+        ) : !animal ? (
+          <div className="vazio">
+            <p>{erroDeCarga ?? "Animal não encontrado."}</p>
+            <Link className="botao" href="/">Voltar ao catálogo</Link>
           </div>
-          <SeloDeSituacao status={animal.status} rotulo={animal.statusRotulo} />
-        </div>
-
-        <div className="ficha">
-          <article className="caderneta">
-            <header className="caderneta-capa">
-              <span className="etiqueta">Caderneta do animal</span>
-              <h2>{animal.nome}</h2>
-            </header>
-
-            <div className="caderneta-retrato" style={{ background: matizDoAnimal(animal.id) }}>
-              <Retrato especie={animal.especie} />
-            </div>
-
-            <div className="caderneta-corpo">
-              <LinhaFicha rotulo="Ficha" valor={String(animal.id)} />
-              <LinhaFicha rotulo="Especie" valor={animal.especieRotulo} />
-              {animal.raca && <LinhaFicha rotulo="Raca" valor={animal.raca} />}
-              <LinhaFicha rotulo="Sexo" valor={animal.sexoRotulo} />
-              <LinhaFicha rotulo="Porte" valor={animal.porteRotulo} />
-              <LinhaFicha rotulo="Idade" valor={animal.idadeRotulo} />
-              <LinhaFicha rotulo="Peso" valor={peso(animal.pesoEmGramas)} />
-              <LinhaFicha rotulo="Entrada" valor={data(animal.dataDeEntrada)} />
-              <LinhaFicha rotulo="Abrigo" valor={animal.abrigo.nome} />
-              <LinhaFicha rotulo="Cidade" valor={animal.abrigo.cidade} />
-            </div>
-
-            <div className="caderneta-selos">
-              <span className="carimbo" data-feito={animal.castrado ? "sim" : "nao"}>
-                {animal.castrado ? "castrado" : "nao castrado"}
-              </span>
-              <span className="carimbo" data-feito={animal.vacinado ? "sim" : "nao"}>
-                {animal.vacinado ? "vacinado" : "sem vacina"}
-              </span>
-              <span className="carimbo" data-feito={animal.vermifugado ? "sim" : "nao"}>
-                {animal.vermifugado ? "vermifugado" : "sem vermifugo"}
-              </span>
-            </div>
-
-            {eventos.length > 0 && (
-              <div className="linha-do-tempo">
-                {eventos.map((evento, indice) => (
-                  <div className="momento" key={`${evento.tipo}-${indice}`}>
-                    <div>
-                      <strong>{evento.tipoRotulo}</strong>
-                      <time dateTime={evento.acontecido}>{data(evento.acontecido)}</time>
-                    </div>
-                    <p>{evento.descricao}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </article>
-
-          <div style={{ display: "grid", gap: "1.4rem" }}>
-            {animal.historia && (
-              <section className="caixa-lateral">
-                <h3>Historia</h3>
-                <p>{animal.historia}</p>
-              </section>
-            )}
-
-            {animal.temperamentos.length > 0 && (
-              <section className="caixa-lateral">
-                <h3>Como {animal.nome} e</h3>
-                <div className="cartao-tracos">
-                  {animal.temperamentos.map((traco) => (
-                    <span className="traco" key={traco.chave}>
-                      {traco.rotulo}
-                    </span>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {animal.observacoesDeSaude && (
-              <section className="caixa-lateral">
-                <h3>Saude</h3>
-                <p>{animal.observacoesDeSaude}</p>
-              </section>
-            )}
-
-            <section className="caixa-lateral" style={{ padding: 0, overflow: "hidden" }}>
-              <PlaquinhaDeColeira
-                nome={animal.nome}
-                linhaDeBaixo={animal.abrigo.cidade}
-                identificador={`FICHA ${animal.id}`}
-                altura={300}
-              />
-              <p className="dica-arraste">Arraste a plaquinha</p>
-            </section>
-
-            {protocolo ? (
-              <section className="caixa-lateral">
-                <h3>Pedido enviado</h3>
-                <p className="aviso" data-tom="ok">
-                  Recebemos seu pedido para {animal.nome}, protocolo {protocolo}. O abrigo entra em
-                  contato pelo e-mail que voce deixou.
-                </p>
-                <Link className="botao" data-tom="vazado" href="/">
-                  Ver outros animais
-                </Link>
-              </section>
-            ) : disponivel ? (
-              <section className="caixa-lateral">
-                <h3>Quero adotar {animal.nome}</h3>
-                <p>
-                  O abrigo le cada pedido antes de responder. Quanto mais voce contar sobre a casa e a
-                  rotina, mais rapido a conversa anda.
-                </p>
-
-                <form className="formulario" onSubmit={candidatar}>
-                  <div className="dupla">
-                    <label className="campo">
-                      <span>Seu nome</span>
-                      <input value={nome} onChange={(e) => setNome(e.target.value)} required />
-                      {campos.nome && <em className="campo-erro">{campos.nome}</em>}
-                    </label>
-                    <label className="campo">
-                      <span>E-mail</span>
-                      <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                             required />
-                      {campos.email && <em className="campo-erro">{campos.email}</em>}
-                    </label>
-                  </div>
-
-                  <div className="dupla">
-                    <label className="campo">
-                      <span>Telefone com DDD</span>
-                      <input value={telefone} onChange={(e) => setTelefone(e.target.value)}
-                             placeholder="21999998888" required />
-                      {campos.telefone && <em className="campo-erro">{campos.telefone}</em>}
-                    </label>
-                    <label className="campo">
-                      <span>Cidade</span>
-                      <input value={cidade} onChange={(e) => setCidade(e.target.value)} required />
-                      {campos.cidade && <em className="campo-erro">{campos.cidade}</em>}
-                    </label>
-                  </div>
-
-                  <label className="campo">
-                    <span>Onde voce mora</span>
-                    <select value={moradia} onChange={(e) => setMoradia(e.target.value)}>
-                      <option value="CASA">Casa</option>
-                      <option value="APARTAMENTO">Apartamento</option>
-                      <option value="SITIO">Sitio ou chacara</option>
-                    </select>
-                  </label>
-
-                  <div className="caixas">
-                    <label className="caixa" data-marcada={areaProtegida ? "sim" : "nao"}>
-                      <input type="checkbox" checked={areaProtegida}
-                             onChange={(e) => setAreaProtegida(e.target.checked)} />
-                      Tem tela, muro ou cerca
-                    </label>
-                    <label className="caixa" data-marcada={temOutrosAnimais ? "sim" : "nao"}>
-                      <input type="checkbox" checked={temOutrosAnimais}
-                             onChange={(e) => setTemOutrosAnimais(e.target.checked)} />
-                      Ja tenho outros animais
-                    </label>
-                  </div>
-
-                  <label className="campo">
-                    <span>Conte um pouco da sua rotina</span>
-                    <textarea value={mensagem} onChange={(e) => setMensagem(e.target.value)}
-                              placeholder="Quem mora na casa, quanto tempo o animal fica sozinho, se ja teve bicho antes" />
-                  </label>
-
-                  {erro && <p className="aviso">{erro}</p>}
-
-                  <button className="botao" type="submit" disabled={enviando}>
-                    {enviando ? "Enviando" : "Enviar pedido"}
-                  </button>
-                </form>
-              </section>
-            ) : (
-              <section className="caixa-lateral">
-                <h3>Nao esta disponivel</h3>
-                <p>
-                  {animal.nome} esta como {animal.statusRotulo.toLowerCase()} no momento, entao o abrigo
-                  nao esta recebendo pedidos por aqui.
-                </p>
-                <Link className="botao" data-tom="vazado" href="/">
-                  Ver quem esta esperando
-                </Link>
-              </section>
-            )}
-          </div>
-        </div>
+        ) : (
+          <Ficha animal={animal} eventos={eventos} />
+        )}
       </main>
+      <Rodape />
+    </>
+  );
+}
+
+function Ficha({ animal, eventos }: { animal: Animal; eventos: Evento[] }) {
+  const Sexo = animal.sexo === "FEMEA" ? Venus : Mars;
+
+  return (
+    <>
+      <nav className="migalha" aria-label="Você está em">
+        <Link href="/"><ChevronLeft size={15} aria-hidden="true" style={{ verticalAlign: "-3px" }} />Catálogo</Link>
+        <span>/</span>
+        <span>{animal.nome}</span>
+      </nav>
+
+      <div className="ficha">
+        <div>
+          <div className="ficha-foto"><FotoDoAnimal animal={animal} prioridade tamanhos="(max-width: 960px) 100vw, 680px" /></div>
+          <Credito foto={animal.foto} />
+
+          <div className="ficha-titulo">
+            <h1>{animal.nome}</h1>
+            <SeloDeSituacao status={animal.status} rotulo={animal.statusRotulo} />
+          </div>
+          <p className="suave" style={{ display: "flex", alignItems: "center", gap: "0.35rem", marginBottom: "1.4rem" }}>
+            <MapPin size={15} aria-hidden="true" />{animal.abrigo.nome}, {animal.abrigo.cidade}
+          </p>
+
+          {animal.historia && <p className="historia" style={{ margin: "1.3rem 0 1.6rem" }}>{animal.historia}</p>}
+
+          <section className="painel-caixa">
+            <h3>Ficha</h3>
+            <dl className="dados">
+              <div className="dado"><dt><IconeDaEspecie especie={animal.especie} size={14} />Espécie</dt><dd>{animal.especieRotulo}</dd></div>
+              <div className="dado"><dt><PawPrint size={14} aria-hidden="true" />Raça</dt><dd>{animal.raca ?? "Sem raça definida"}</dd></div>
+              <div className="dado"><dt><Sexo size={14} aria-hidden="true" />Sexo</dt><dd>{animal.sexoRotulo}</dd></div>
+              <div className="dado"><dt><CalendarDays size={14} aria-hidden="true" />Idade</dt><dd>{animal.idadeRotulo}</dd></div>
+              <div className="dado"><dt><Ruler size={14} aria-hidden="true" />Porte</dt><dd>{animal.porteRotulo}</dd></div>
+              <div className="dado"><dt><Weight size={14} aria-hidden="true" />Peso</dt><dd className="numero">{peso(animal.pesoEmGramas)}</dd></div>
+              <div className="dado"><dt><House size={14} aria-hidden="true" />No abrigo</dt><dd>{tempoNoAbrigo(animal.dataDeEntrada)}</dd></div>
+            </dl>
+
+            <div className="cuidados" style={{ marginTop: "1.2rem" }}>
+              <span className="cuidado" data-feito={animal.vacinado ? "sim" : undefined}><Syringe size={14} aria-hidden="true" />{animal.vacinado ? "Vacinado" : "Vacina pendente"}</span>
+              <span className="cuidado" data-feito={animal.castrado ? "sim" : undefined}><Scissors size={14} aria-hidden="true" />{animal.castrado ? "Castrado" : "Não castrado"}</span>
+              <span className="cuidado" data-feito={animal.vermifugado ? "sim" : undefined}><Pill size={14} aria-hidden="true" />{animal.vermifugado ? "Vermifugado" : "Vermífugo pendente"}</span>
+            </div>
+          </section>
+
+          {animal.temperamentos.length > 0 && (
+            <section className="painel-caixa">
+              <h3>Jeito de ser</h3>
+              <div className="tracos">
+                {animal.temperamentos.map((traco) => <span className="traco" key={traco.chave}>{traco.rotulo}</span>)}
+              </div>
+            </section>
+          )}
+
+          {animal.observacoesDeSaude && (
+            <section className="painel-caixa"><h3>Saúde</h3><p className="suave">{animal.observacoesDeSaude}</p></section>
+          )}
+
+          {eventos.length > 0 && (
+            <section className="painel-caixa">
+              <h3>Linha do tempo</h3>
+              <ol className="linha-do-tempo">
+                {eventos.map((evento, indice) => (
+                  <li className="momento" data-tipo={evento.tipo} key={`${evento.tipo}-${indice}`}>
+                    <span className="momento-ponto" aria-hidden="true" />
+                    <strong>{evento.tipoRotulo}</strong>
+                    <time dateTime={evento.acontecido}>{dataPorExtenso(evento.acontecido)}</time>
+                    {evento.descricao !== evento.tipoRotulo && <p>{evento.descricao}</p>}
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )}
+        </div>
+
+        <aside className="lateral">
+          <PedidoDeAdocao animal={animal} />
+          <div className="plaquinha-caixa">
+            <PlaquinhaDeColeira nome={animal.nome} linhaDeBaixo={animal.abrigo.cidade} identificador={`FICHA ${animal.id}`} altura={230} />
+            <p className="plaquinha-dica"><Hand size={14} aria-hidden="true" />Arraste a plaquinha</p>
+          </div>
+        </aside>
+      </div>
     </>
   );
 }

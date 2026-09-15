@@ -2,23 +2,19 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { ChevronRight, Inbox, LoaderCircle, Plus, Search, SearchX } from "lucide-react";
+import FotoDoAnimal from "@/components/FotoDoAnimal";
 import GraficoDeAdocoes from "@/components/GraficoDeAdocoes";
 import GraficoDeEspecies from "@/components/GraficoDeEspecies";
+import ProporcaoPorSituacao from "@/components/ProporcaoPorSituacao";
 import SeloDeSituacao from "@/components/SeloDeSituacao";
-import {
-  api,
-  ErroDaApi,
-  type AdocoesNoMes,
-  type Animal,
-  type FatiaDeEspecie,
-  type ResumoDoAbrigo
-} from "@/lib/api";
-import { data, peso, preencherMeses, rotuloCurto } from "@/lib/formato";
+import { api, ErroDaApi, type AdocoesNoMes, type Animal, type FatiaDeEspecie, type ResumoDoAbrigo } from "@/lib/api";
+import { preencherMeses, tempoNoAbrigo } from "@/lib/formato";
 import { lerSessao } from "@/lib/sessao";
 
 const SITUACOES = [
   { chave: "", rotulo: "Todos" },
-  { chave: "DISPONIVEL", rotulo: "Disponiveis" },
+  { chave: "DISPONIVEL", rotulo: "Esperando casa" },
   { chave: "EM_PROCESSO", rotulo: "Em processo" },
   { chave: "ADOTADO", rotulo: "Adotados" },
   { chave: "INDISPONIVEL", rotulo: "Fora da vitrine" }
@@ -35,166 +31,118 @@ export default function Painel() {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
 
-  const carregar = useCallback(async () => {
+  // números e gráficos não mudam com o filtro da lista, então carregam uma vez só
+  useEffect(() => {
     const sessao = lerSessao();
     if (!sessao) return;
+    Promise.all([api.resumo(sessao.token), api.especies(sessao.token), api.adocoesPorMes(sessao.token, 12)])
+      .then(([totais, porEspecie, porMes]) => { setResumo(totais); setEspecies(porEspecie); setMeses(porMes); })
+      .catch((falha) => setErro(falha instanceof ErroDaApi ? falha.message : "O resumo do abrigo não carregou."));
+  }, []);
 
+  const carregarLista = useCallback(async () => {
+    const sessao = lerSessao();
+    if (!sessao) return;
     setCarregando(true);
-    setErro(null);
-
     try {
-      const [pagina, totais, porEspecie, porMes] = await Promise.all([
-        api.animaisDoAbrigo(sessao.token, {
-          status: situacao || undefined,
-          busca: buscaAplicada || undefined,
-          tamanho: 50
-        }),
-        api.resumo(sessao.token),
-        api.especies(sessao.token),
-        api.adocoesPorMes(sessao.token, 12)
-      ]);
-
+      const pagina = await api.animaisDoAbrigo(sessao.token, { status: situacao || undefined,
+                                                              busca: buscaAplicada || undefined, tamanho: 50 });
       setAnimais(pagina.itens);
-      setResumo(totais);
-      setEspecies(porEspecie);
-      setMeses(porMes);
     } catch (falha) {
-      setErro(falha instanceof ErroDaApi ? falha.message : "Nao foi possivel carregar o painel.");
+      setErro(falha instanceof ErroDaApi ? falha.message : "A lista de animais não carregou.");
     } finally {
       setCarregando(false);
     }
   }, [situacao, buscaAplicada]);
 
-  useEffect(() => {
-    void carregar();
-  }, [carregar]);
+  useEffect(() => { void carregarLista(); }, [carregarLista]);
+
+  const pedidos = resumo?.candidaturasEmAberto ?? 0;
+  const filtrando = Boolean(situacao || buscaAplicada);
 
   return (
     <>
       <div className="cabecalho-secao">
         <div>
-          <span className="etiqueta">Acervo do abrigo</span>
-          <h2>Animais</h2>
+          <h1 style={{ fontSize: "2.2rem" }}>Acervo</h1>
+          <p>Quem está com vocês, quem já foi e o que falta resolver.</p>
         </div>
-        <div className="acoes-botoes">
-          <Link className="botao" data-tom="vazado" href="/painel/candidaturas">
-            Pedidos {resumo && resumo.candidaturasEmAberto > 0 ? `(${resumo.candidaturasEmAberto})` : ""}
-          </Link>
-          <Link className="botao" href="/painel/novo">
-            Cadastrar animal
-          </Link>
+        <Link className="botao" href="/painel/novo"><Plus size={16} aria-hidden="true" />Cadastrar animal</Link>
+      </div>
+
+      {resumo && (
+        <div className="resumo">
+          <ProporcaoPorSituacao resumo={resumo} />
+          <div className="chamada" data-vazia={pedidos === 0 ? "sim" : undefined}>
+            <div>
+              <strong>{pedidos}</strong>
+              {pedidos === 0
+                ? "Nenhum pedido esperando resposta."
+                : pedidos === 1 ? "pedido esperando resposta" : "pedidos esperando resposta"}
+            </div>
+            {pedidos > 0 && (
+              <Link className="botao" data-tamanho="pequeno" href="/painel/candidaturas">
+                <Inbox size={15} aria-hidden="true" />Responder
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
+
+      {resumo && (
+        <div className="graficos">
+          <GraficoDeAdocoes meses={preencherMeses(meses, 12)} />
+          <GraficoDeEspecies fatias={especies} />
+        </div>
+      )}
+
+      <div className="barra-filtros">
+        <form className="busca-grande" data-tamanho="compacto" role="search"
+              onSubmit={(evento) => { evento.preventDefault(); setBuscaAplicada(busca.trim()); }}>
+          <Search size={16} aria-hidden="true" color="var(--tinta-3)" />
+          <input value={busca} onChange={(e) => setBusca(e.target.value)} aria-label="Buscar no acervo"
+                 placeholder="Nome, raça ou história" />
+        </form>
+        <div className="opcoes" role="group" aria-label="Situação">
+          {SITUACOES.map((opcao) => (
+            <button key={opcao.chave || "todos"} type="button" className="opcao" aria-pressed={situacao === opcao.chave}
+                    onClick={() => setSituacao(opcao.chave)}>
+              {opcao.rotulo}
+            </button>
+          ))}
         </div>
       </div>
 
-      <div className="placar">
-        <div className="placar-item" data-destaque="sim">
-          <strong className="numero">{resumo?.disponiveis ?? 0}</strong>
-          <span className="etiqueta">esperando casa</span>
-        </div>
-        <div className="placar-item">
-          <strong className="numero">{resumo?.emProcesso ?? 0}</strong>
-          <span className="etiqueta">em processo</span>
-        </div>
-        <div className="placar-item">
-          <strong className="numero">{resumo?.adotados ?? 0}</strong>
-          <span className="etiqueta">adotados</span>
-        </div>
-        <div className="placar-item">
-          <strong className="numero">{resumo?.candidaturasEmAberto ?? 0}</strong>
-          <span className="etiqueta">pedidos em aberto</span>
-        </div>
-        <div className="placar-item">
-          <strong className="numero">
-            {(resumo?.mediaDeDiasAteAdocao ?? 0).toString().replace(".", ",")}
-          </strong>
-          <span className="etiqueta">dias ate adotar</span>
-        </div>
-      </div>
+      {erro && <p className="aviso" role="alert" style={{ marginBottom: "1rem" }}>{erro}</p>}
 
-      <div className="paineis">
-        <GraficoDeAdocoes meses={preencherMeses(meses, 12)} />
-        <GraficoDeEspecies fatias={especies} />
-      </div>
-
-      <form
-        className="barra-de-busca"
-        onSubmit={(evento) => {
-          evento.preventDefault();
-          setBuscaAplicada(busca);
-        }}
-      >
-        <label className="campo">
-          <span>Buscar</span>
-          <input value={busca} onChange={(e) => setBusca(e.target.value)}
-                 placeholder="nome, raca ou historia" />
-        </label>
-        <button className="botao" data-tom="vazado" type="submit">
-          Filtrar
-        </button>
-        {buscaAplicada && (
-          <button className="botao" data-tom="vazado" type="button"
-                  onClick={() => { setBusca(""); setBuscaAplicada(""); }}>
-            Limpar
-          </button>
-        )}
-      </form>
-
-      <div className="filtros">
-        {SITUACOES.map((opcao) => (
-          <button
-            key={opcao.chave || "todos"}
-            className="filtro"
-            type="button"
-            data-ativo={situacao === opcao.chave ? "sim" : "nao"}
-            onClick={() => setSituacao(opcao.chave)}
-          >
-            {opcao.rotulo}
-          </button>
-        ))}
-      </div>
-
-      {erro && <p className="aviso">{erro}</p>}
-
-      {carregando ? (
-        <p className="carregando">Carregando</p>
+      {carregando && animais.length === 0 ? (
+        <div className="carregando"><LoaderCircle size={18} className="girando" aria-hidden="true" />Carregando</div>
       ) : animais.length === 0 ? (
         <div className="vazio">
-          <p>
-            {situacao || buscaAplicada
-              ? "Nenhum animal com esses filtros."
-              : "Nenhum animal cadastrado ainda. Comece pelo primeiro."}
-          </p>
-          <Link className="botao" href="/painel/novo">
-            Cadastrar animal
-          </Link>
+          <SearchX size={26} aria-hidden="true" />
+          <p>{filtrando ? "Nenhum animal com esses filtros." : "Nenhum animal cadastrado ainda. Comece pelo primeiro."}</p>
+          {filtrando ? (
+            <button className="botao" data-tom="neutro" type="button"
+                    onClick={() => { setSituacao(""); setBusca(""); setBuscaAplicada(""); }}>
+              Limpar filtros
+            </button>
+          ) : (
+            <Link className="botao" href="/painel/novo"><Plus size={16} aria-hidden="true" />Cadastrar animal</Link>
+          )}
         </div>
       ) : (
-        <div className="razao">
-          {animais.map((animal, indice) => (
-            <div className="razao-linha entra" key={animal.id}
-                 style={{ animationDelay: `${Math.min(indice, 10) * 40}ms` }}>
-              <span className="razao-id">#{animal.id}</span>
-
-              <span className="razao-nome">
+        <div className="tabela" aria-busy={carregando}>
+          {animais.map((animal) => (
+            <Link className="linha" key={animal.id} href={`/painel/${animal.id}`}>
+              <span className="miniatura"><FotoDoAnimal animal={animal} /></span>
+              <span className="linha-nome">
                 <strong>{animal.nome}</strong>
-                <span>
-                  {animal.especieRotulo} · {animal.porteRotulo} · {animal.idadeRotulo} ·{" "}
-                  {peso(animal.pesoEmGramas)}
-                </span>
+                <span>{[animal.raca ?? animal.especieRotulo, animal.sexoRotulo.toLowerCase(), animal.idadeRotulo].join(", ")}</span>
               </span>
-
-              <span className="razao-situacao">
-                <SeloDeSituacao status={animal.status} rotulo={rotuloCurto(animal.statusRotulo)} />
-              </span>
-
-              <span className="razao-id">desde {data(animal.dataDeEntrada)}</span>
-
-              <span className="razao-acoes">
-                <Link className="botao" data-tom="vazado" href={`/painel/${animal.id}`}>
-                  Abrir
-                </Link>
-              </span>
-            </div>
+              <SeloDeSituacao status={animal.status} rotulo={animal.statusRotulo} curto />
+              <span className="linha-data">chegou {tempoNoAbrigo(animal.dataDeEntrada)}</span>
+              <ChevronRight size={18} aria-hidden="true" color="var(--tinta-3)" />
+            </Link>
           ))}
         </div>
       )}
