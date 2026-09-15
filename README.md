@@ -79,22 +79,33 @@ As tabelas são criadas pelo Flyway na subida, a partir de
 - JJWT para emissão e validação dos tokens
 - JUnit 5, AssertJ, Mockito e MockMvc nos testes
 - Next.js 15 com React 19, TypeScript e Three.js no catálogo e no painel
+- Ícones do Lucide, Fraunces nos títulos e Geist no texto
+- Vitest e Testing Library nos testes da interface
 
 O projeto foi desenvolvido no IntelliJ IDEA e abre direto como projeto Maven.
 
 ## Testes
 
 ```bash
-./mvnw test
+./mvnw verify          # API: testes e conferência de cobertura
+cd web && npm test     # interface
 ```
 
-São 104 testes em três níveis: as regras de domínio em testes de unidade puros,
-o fluxo completo em testes de integração que sobem o contexto do Spring e chamam
-a API por HTTP, e os caminhos de borda da autenticação e do tratamento de erro.
+**API: 141 testes, todos passando.** Ficam em três níveis: as regras de domínio
+em testes de unidade puros, o fluxo completo em testes de integração que sobem o
+contexto do Spring e chamam a API por HTTP, e os caminhos de borda da
+autenticação, do envio de foto e do tratamento de erro. O JaCoCo mede **99,5% de
+instruções, 99,4% de ramos e 99,3% de linhas**, e `./mvnw verify` reprova se
+instruções ou ramos caírem abaixo de 98%. O que sobra descoberto é o `main` da
+aplicação e o `catch` de um algoritmo de hash que toda JVM é obrigada a ter.
 
-O JaCoCo mede a cobertura e o relatório sai em `target/site/jacoco/index.html`.
-Hoje o projeto está em **99,2% de instruções, 88,3% de ramos e 100% das
-classes**, e `./mvnw verify` reprova se cair abaixo disso.
+**Interface: 158 testes, todos passando**, de `lib/` às páginas, com a API
+simulada. A cobertura do V8 dá **100% de linhas e funções e 99,8% de ramos**, e
+`npm run test:cobertura` reprova abaixo de 98%. A plaquinha de coleira fica fora
+da conta: é WebGL, que o jsdom não tem, e a física dela mora em `lib/pendulo.ts`,
+que tem teste próprio. Os testes esperam o que a pessoa vê e faz (rótulo, botão,
+mensagem de erro), e não detalhe de implementação, para não quebrarem a cada
+ajuste de layout.
 
 Uma das classes de teste, `SemTransacaoDeTesteIT`, não leva `@Transactional`, e
 a ausência é o ponto. Com a anotação, o Spring mantém uma sessão aberta durante
@@ -147,6 +158,9 @@ devolve o animal ao catálogo.
 | POST | `/api/v1/animais/{id}/candidaturas` | Envia um pedido de adoção, sem cadastro |
 | GET | `/api/v1/animais/{id}/candidaturas` | Pedidos de um animal |
 | POST | `/api/v1/animais/{id}/devolucao` | Registra a devolução de um adotado |
+| PUT | `/api/v1/animais/{id}/foto` | Envia ou troca a foto, com autor, licença e origem |
+| GET | `/api/v1/animais/{id}/foto` | Baixa a foto, com cache e ETag, sem token |
+| DELETE | `/api/v1/animais/{id}/foto` | Remove a foto |
 | GET | `/api/v1/candidaturas` | Fila de pedidos do abrigo |
 | POST | `/api/v1/candidaturas/{id}/analise` | Marca o pedido como em análise |
 | POST | `/api/v1/candidaturas/{id}/aprovacao` | Aprova e reserva o animal |
@@ -159,7 +173,9 @@ devolve o animal ao catálogo.
 | GET | `/saude` | Verificação de disponibilidade |
 
 O catálogo aceita filtro por espécie, porte, sexo, situação, temperamento,
-cidade do abrigo, apenas filhotes e busca livre por nome, raça ou história. Os
+cidade do abrigo, apenas filhotes e busca livre por nome, raça ou história. A
+busca e a cidade ignoram acento nos dois sentidos: "perola" acha Pérola e "SAO
+GONCALO" acha São Gonçalo. Os
 filtros são montados como `Specification`, e não como uma derived query por
 combinação, que dobraria a cada filtro novo.
 
@@ -170,16 +186,16 @@ validação traz também o objeto `campos`, com a mensagem de cada campo reprova
 
 ```json
 {
-  "title": "Requisicao invalida",
+  "title": "Requisição inválida",
   "status": 400,
-  "detail": "Um ou mais campos nao passaram na validacao.",
-  "campos": { "nome": "todo animal precisa de um nome, nem que seja provisorio" }
+  "detail": "Um ou mais campos não passaram na validação.",
+  "campos": { "nome": "todo animal precisa de um nome, nem que seja provisório" }
 }
 ```
 
 Os códigos usados são 400 para entrada malformada, 401 sem token válido, 404
-para animal inexistente ou de outro abrigo, 409 para e-mail já cadastrado e 422
-para operação proibida pela regra de negócio.
+para animal inexistente ou de outro abrigo, 409 para e-mail já cadastrado, 413 para
+foto acima do limite e 422 para operação proibida pela regra de negócio.
 
 ## Catálogo e painel
 
@@ -195,10 +211,24 @@ vaivém de metrônomo. Também gira no próprio eixo, o que deixa ver o verso
 gravado. Na ficha de cada animal ela sai gravada com o nome dele e o número da
 ficha.
 
-Como o abrigo não tem foto de todo animal, e foto de banco de imagem mentiria
-sobre quem está ali, cada espécie tem um retrato geométrico próprio e cada ficha
-ganha um matiz derivado do id. Dois animais nunca saem iguais na tela, e nenhum
-deles finge ser uma fotografia.
+Os 28 animais da conta de demonstração têm foto de verdade, escolhida uma a uma
+no Wikimedia Commons para bater com a espécie, a raça e a história de cada um, e
+só entre imagens de licença livre (CC0, domínio público, CC BY e CC BY-SA). Como
+CC BY e CC BY-SA só permitem o uso com atribuição, cada foto sobe junto com
+autor, licença e link da página de origem, e a ficha mostra esse crédito embaixo
+da imagem. A lista está em `web/scripts/fotos.json`.
+
+A foto mora em tabela própria, e não em coluna do animal, para a listagem do
+catálogo não arrastar os bytes de dezenas de imagens a cada página. O formato é
+conferido pelos primeiros bytes do arquivo (JPEG, PNG ou WEBP), porque o tipo
+declarado no envio é escolha de quem envia e não prova nada. A URL leva a versão
+do conteúdo, então o navegador guarda a imagem por uma semana e ainda assim vê a
+troca na hora. O link de origem só é aceito começando por `http://` ou
+`https://`, já que ele vira link clicável na ficha pública.
+
+Quando um animal ainda não tem foto, ou a imagem falha ao carregar, entra um
+retrato geométrico da espécie sobre um matiz derivado do id: desenho assumido,
+que não finge ser fotografia.
 
 Os gráficos do painel são desenhados em SVG, sem biblioteca. A paleta passou em
 verificação automática de banda de luminosidade, piso de croma, separação sob
@@ -213,13 +243,21 @@ npm run dev     # catálogo e painel em localhost:3000, com a API em localhost:8
 npm run prints  # percorre as telas em Chromium headless e grava as imagens
 ```
 
-Telas em `web/prints/`.
+Telas em `web/prints/`, gravadas contra a API de verdade. O mesmo script falha
+se aparecer erro no console do navegador.
 
 ![Catálogo público](web/prints/01-catalogo.png)
 
-![Ficha do animal](web/prints/02-ficha-do-animal.png)
+![Ficha do animal](web/prints/03-ficha-do-animal.png)
 
-![Painel do abrigo](web/prints/05-painel.png)
+![Painel do abrigo](web/prints/06-painel.png)
+
+![Pedidos de adoção](web/prints/09-pedidos.png)
+
+<p>
+  <img src="web/prints/12-catalogo-celular.png" alt="Catálogo no celular" width="260">
+  <img src="web/prints/11-pedidos-celular.png" alt="Pedidos no celular" width="260">
+</p>
 
 ## Organização do código
 
@@ -230,6 +268,7 @@ src/main/java/br/com/ricardofigueiredo/guarida
 ├── candidatura  pedidos de adoção e o que o abrigo faz com eles
 ├── comum        tratamento de erro, paginação e verificação de disponibilidade
 ├── config       segurança, OpenAPI e o relógio injetável
+├── foto         envio, conferência e entrega da foto com crédito
 ├── painel       contagens e séries que o abrigo vê ao entrar
 └── seguranca    emissão do token, filtro de autenticação e resposta de 401
 ```
@@ -245,11 +284,5 @@ documentação para a API, de modo que os dois compartilham a mesma origem e nã
 existe CORS no caminho.
 
 As credenciais de banco e o segredo do JWT ficam fora do repositório, em um
-arquivo de ambiente lido pelas unidades do systemd.
-
-## Uma observação sobre acentuação
-
-O texto de interface e as mensagens da API estão sem acento, por escolha de
-manter todo o código em ASCII. Este README e a documentação usam acentuação
-normal. Se preferir a interface acentuada, é uma troca localizada nos rótulos
-dos enums e nos textos das telas.
+arquivo de ambiente lido pelas unidades do systemd. O nginx limita o corpo das
+requisições a 1 MB, com exceção da rota de foto, que aceita até 3 MB.
