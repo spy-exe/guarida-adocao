@@ -1,18 +1,18 @@
 package br.com.ricardofigueiredo.guarida.animal;
 
+import java.util.Arrays;
+
 public enum Porte {
 
-    PEQUENO("Pequeno", 0, 10_000),
-    MEDIO("Médio", 10_001, 25_000),
-    GRANDE("Grande", 25_001, Integer.MAX_VALUE);
+    PEQUENO("Pequeno", 10_000),
+    MEDIO("Médio", 25_000),
+    GRANDE("Grande", Integer.MAX_VALUE);
 
     private final String rotulo;
-    private final int pesoMinimoEmGramas;
     private final int pesoMaximoEmGramas;
 
-    Porte(String rotulo, int pesoMinimoEmGramas, int pesoMaximoEmGramas) {
+    Porte(String rotulo, int pesoMaximoEmGramas) {
         this.rotulo = rotulo;
-        this.pesoMinimoEmGramas = pesoMinimoEmGramas;
         this.pesoMaximoEmGramas = pesoMaximoEmGramas;
     }
 
@@ -22,12 +22,11 @@ public enum Porte {
      * pouco e continua sendo de porte grande.
      */
     public static Porte sugeridoPara(int pesoEmGramas) {
-        for (Porte porte : values()) {
-            if (pesoEmGramas >= porte.pesoMinimoEmGramas && pesoEmGramas <= porte.pesoMaximoEmGramas) {
-                return porte;
-            }
-        }
-        return GRANDE;
+        // as faixas estao em ordem crescente, entao vale a primeira cujo teto comporta o peso
+        return Arrays.stream(values())
+                .filter(porte -> pesoEmGramas <= porte.pesoMaximoEmGramas)
+                .findFirst()
+                .orElse(GRANDE);
     }
 
     public String getRotulo() {

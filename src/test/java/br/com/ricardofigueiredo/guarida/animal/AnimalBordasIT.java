@@ -43,6 +43,49 @@ class AnimalBordasIT {
     }
 
     @Test
+    @DisplayName("telefone do abrigo e raca do animal em branco viram ausentes, nao texto vazio")
+    void brancoViraAusente() throws Exception {
+        String email = "branco-" + UUID.randomUUID() + "@exemplo.com";
+        mockMvc.perform(post("/api/v1/autenticacao/registro")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(corpoDeRegistro(email, "   ")))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.telefone").doesNotExist());
+
+        String token = autenticar();
+        mockMvc.perform(post("/api/v1/animais")
+                        .header(HttpHeaders.AUTHORIZATION, token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nome": "Bidu", "especie": "CACHORRO", "raca": "   ", "sexo": "MACHO", "porte": "MEDIO",
+                                 "nascimentoEstimado": "%s", "pesoEmGramas": 15000, "dataDeEntrada": "%s"}"""
+                                .formatted(LocalDate.now().minusYears(1), LocalDate.now())))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.raca").doesNotExist());
+
+        // sem nascimento a regra de datas nao tem o que comparar, e quem reclama e o campo obrigatorio
+        mockMvc.perform(post("/api/v1/animais")
+                        .header(HttpHeaders.AUTHORIZATION, token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nome": "Bidu", "especie": "CACHORRO", "sexo": "MACHO", "porte": "MEDIO",
+                                 "pesoEmGramas": 15000, "dataDeEntrada": "%s"}""".formatted(LocalDate.now())))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.campos.nascimentoEstimado").exists())
+                .andExpect(jsonPath("$.campos.entradaDepoisDoNascimento").doesNotExist());
+
+        mockMvc.perform(post("/api/v1/animais")
+                        .header(HttpHeaders.AUTHORIZATION, token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nome": "Bidu", "especie": "CACHORRO", "sexo": "MACHO", "porte": "MEDIO",
+                                 "pesoEmGramas": 15000, "nascimentoEstimado": "%s"}""".formatted(LocalDate.now())))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.campos.dataDeEntrada").exists())
+                .andExpect(jsonPath("$.campos.entradaDepoisDoNascimento").doesNotExist());
+    }
+
+    @Test
     @DisplayName("o mesmo e-mail não cadastra dois abrigos")
     void emailRepetidoNaoCadastra() throws Exception {
         String email = "repetido-" + UUID.randomUUID() + "@exemplo.com";

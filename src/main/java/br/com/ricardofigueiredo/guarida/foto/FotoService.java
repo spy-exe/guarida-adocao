@@ -44,9 +44,14 @@ public class FotoService {
                 .orElseThrow(() -> new RegraDeNegocioException(
                         "O arquivo não é uma imagem JPEG, PNG ou WEBP."));
 
+        String origem = limpar(fonte, 300);
+        // o link aparece como href na ficha pública; qualquer esquema fora de http abriria porta para script
+        if (origem != null && !origem.matches("(?i)^https?://\\S+$")) {
+            throw new RegraDeNegocioException("O link da origem precisa começar com http:// ou https://.");
+        }
+
         FotoDoAnimal foto = fotoRepository.findById(animalId).orElseGet(() -> new FotoDoAnimal(animalId));
-        foto.trocar(conteudo, tipo, versaoDe(conteudo), limpar(autor, 160), limpar(licenca, 60),
-                limpar(fonte, 300));
+        foto.trocar(conteudo, tipo, versaoDe(conteudo), limpar(autor, 160), limpar(licenca, 60), origem);
 
         return fotoRepository.save(foto);
     }

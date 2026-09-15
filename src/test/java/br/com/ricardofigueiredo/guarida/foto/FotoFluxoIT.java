@@ -137,6 +137,22 @@ class FotoFluxoIT {
     }
 
     @Test
+    @DisplayName("link de origem que nao e http e recusado, para nao virar script na ficha publica")
+    void recusaOrigemSemHttp() throws Exception {
+        String token = autenticar();
+        long id = criarAnimal(token, "Bento");
+
+        mockMvc.perform(enviar(id, imagem("png"), "a.png").param("fonte", "javascript:alert(1)")
+                        .header(HttpHeaders.AUTHORIZATION, token))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString("http://")));
+
+        mockMvc.perform(enviar(id, imagem("png"), "a.png").param("fonte", "  https://commons.wikimedia.org/wiki/File:A.jpg ")
+                        .header(HttpHeaders.AUTHORIZATION, token))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     @DisplayName("arquivo vazio e recusado")
     void recusaArquivoVazio() throws Exception {
         String token = autenticar();

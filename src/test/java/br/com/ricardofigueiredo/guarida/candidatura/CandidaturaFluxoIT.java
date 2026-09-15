@@ -166,6 +166,51 @@ class CandidaturaFluxoIT {
     }
 
     @Test
+    @DisplayName("com vinte pedidos em aberto a fila fecha, e mensagem em branco nao e guardada")
+    void filaCheiaEMensagemEmBranco() throws Exception {
+        String token = autenticar();
+        long animal = criarAnimal(token);
+
+        mockMvc.perform(post("/api/v1/animais/" + animal + "/candidaturas")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(corpoDaCandidatura("Maria Souza", "maria@exemplo.com")
+                                .replace("Trabalho de casa e tenho tempo de sobra", "   ")))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/v1/animais/" + animal + "/candidaturas").header(HttpHeaders.AUTHORIZATION, token))
+                .andExpect(jsonPath("$[0].mensagem").doesNotExist());
+
+        for (int pessoa = 1; pessoa < 20; pessoa++) {
+            candidatar(animal, "Pessoa " + pessoa, "pessoa" + pessoa + "@exemplo.com");
+        }
+
+        mockMvc.perform(post("/api/v1/animais/" + animal + "/candidaturas")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(corpoDaCandidatura("Vinte e um", "vinte.e.um@exemplo.com")))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString("está cheia")));
+    }
+
+    @Test
+    @DisplayName("devolucao sem motivo escrito fica registrada com texto padrao")
+    void devolucaoSemMotivo() throws Exception {
+        String token = autenticar();
+        long animal = criarAnimal(token);
+        long candidatura = candidatar(animal, "Maria Souza", "maria@exemplo.com");
+        mockMvc.perform(post("/api/v1/candidaturas/" + candidatura + "/aprovacao").header(HttpHeaders.AUTHORIZATION, token));
+        mockMvc.perform(post("/api/v1/candidaturas/" + candidatura + "/adocao").header(HttpHeaders.AUTHORIZATION, token));
+
+        mockMvc.perform(post("/api/v1/animais/" + animal + "/devolucao")
+                        .param("motivo", "  ")
+                        .header(HttpHeaders.AUTHORIZATION, token))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/v1/animais/" + animal + "/eventos"))
+                .andExpect(jsonPath("$[?(@.tipo == 'DEVOLUCAO')].descricao")
+                        .value(org.hamcrest.Matchers.hasItem("Devolvido ao abrigo")));
+    }
+
+    @Test
     @DisplayName("concluir adoção sem aprovacao não passa")
     void adocaoExigeAprovacao() throws Exception {
         String token = autenticar();

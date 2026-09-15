@@ -55,4 +55,13 @@ class TipoDeImagemTest {
         assertThat(FotoService.limpar("  Ana  ", 10)).isEqualTo("Ana");
         assertThat(FotoService.limpar("abcdefghijkl", 5)).isEqualTo("abcde");
     }
+
+    @org.junit.jupiter.params.ParameterizedTest(name = "RIFF com o byte {0} trocado nao passa por WEBP")
+    @org.junit.jupiter.params.provider.ValueSource(ints = {0, 1, 2, 3, 8, 9, 10, 11})
+    @DisplayName("cada letra da assinatura RIFF....WEBP conta")
+    void cadaLetraDoWebpConta(int posicao) {
+        byte[] quase = "RIFF\0\0\0\0WEBPVP8 ".getBytes(StandardCharsets.ISO_8859_1);
+        quase[posicao] = 'X';
+        assertThat(TipoDeImagem.reconhecer(quase)).isEmpty();
+    }
 }

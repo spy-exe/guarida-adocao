@@ -10,6 +10,7 @@ class PorteTest {
 
     @ParameterizedTest(name = "{0} g sugere porte {1}")
     @CsvSource({
+            "0, PEQUENO",
             "500, PEQUENO",
             "9999, PEQUENO",
             "10000, PEQUENO",

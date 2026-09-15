@@ -18,7 +18,7 @@ import java.util.Set;
 
 public record CadastrarAnimalRequest(
 
-        @NotBlank(message = "todo animal precisa de um nome, nem que seja provisorio")
+        @NotBlank(message = "todo animal precisa de um nome, nem que seja provisório")
         @Size(max = 60, message = "o nome pode ter no máximo 60 caracteres")
         String nome,
 

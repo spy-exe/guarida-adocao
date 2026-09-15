@@ -40,7 +40,7 @@ public class CandidaturaService {
 
         if (animal.getStatus() != StatusAnimal.DISPONIVEL) {
             throw new RegraDeNegocioException(animal.getNome()
-                    + " não esta disponível para adoção no momento. Situação atual: "
+                    + " não está disponível para adoção no momento. Situação atual: "
                     + animal.getStatus().getRotulo() + ".");
         }
 
@@ -49,7 +49,7 @@ public class CandidaturaService {
 
         if (emAberto >= LIMITE_DE_CANDIDATURAS_EM_ABERTO) {
             throw new RegraDeNegocioException(
-                    "A fila de interessados neste animal esta cheia. Tente de novo em alguns dias.");
+                    "A fila de interessados neste animal está cheia. Tente de novo em alguns dias.");
         }
 
         Candidatura candidatura = candidaturaRepository.save(new Candidatura(
