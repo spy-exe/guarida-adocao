@@ -56,7 +56,7 @@ const ELENCO = [
     "Chegou prenha e criou a ninhada inteira no abrigo. Depois que os filhotes foram adotados, ficou esperando a vez dela.", "disponivel"],
   ["Pipoca", "COELHO", "Mini lop", "FEMEA", "PEQUENO", 11, 1900, 70,
     ["TIMIDO", "CALMO"],
-    "Entregue por uma família que comprou na feira sem saber que coelho vive oito anos. Come alface na mão de quem senta no chao.", "disponivel"],
+    "Entregue por uma família que comprou na feira sem saber que coelho vive oito anos. Come alface na mão de quem senta no chão.", "disponivel"],
   ["Chico", "PASSARO", "Calopsita", "MACHO", "PEQUENO", 30, 320, 55,
     ["AGITADO", "SOCIAVEL_COM_GATOS"],
     "Resgatado de uma gaiola pequena demais, com as penas da asa cortadas. Já voa de novo e assobia o refrão de uma música que ninguém identificou ainda.", "disponivel"],
