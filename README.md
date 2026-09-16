@@ -5,9 +5,14 @@ catálogo aberto, onde qualquer pessoa consulta os animais e manda um pedido de
 adoção sem criar conta, e um painel do abrigo, onde só quem cuida cadastra,
 altera e exclui.
 
-**Autor:** Ricardo Figueiredo
-**Matrícula:** 202310773
 **Avaliação:** Prova prática de Desenvolvimento de Sistema Java
+
+| Integrante | Matrícula |
+|---|---|
+| Aline de Brito Simas | 202310031 |
+| Caio dos Santos Silva | 202310328 |
+| Mellani Lyvian de Macêdo dos Santos | 202310725 |
+| Ricardo Ribeiro de Figueiredo | 202310773 |
 
 ## As cinco operações do enunciado
 

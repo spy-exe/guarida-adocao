@@ -29,9 +29,11 @@ describe("marca, topo e rodapé", () => {
     expect(screen.getByRole("link", { name: "Acervo" })).toBeInTheDocument();
   });
 
-  it("o rodapé assina o trabalho e credita o Commons", () => {
+  it("o rodapé assina o trabalho com o grupo inteiro e credita o Commons", () => {
     render(<Rodape />);
-    expect(screen.getByText(/Ricardo Figueiredo, matrícula 202310773/)).toBeInTheDocument();
+    expect(screen.getAllByRole("listitem")).toHaveLength(4);
+    expect(screen.getByText(/Mellani Lyvian de Macêdo dos Santos/)).toBeInTheDocument();
+    expect(screen.getByText("202310773")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Wikimedia Commons" })).toHaveAttribute("rel", "noreferrer");
   });
 });
