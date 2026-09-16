@@ -53,6 +53,8 @@ public class SegurancaConfig {
                         // o catalogo e a ficha de cada animal ficam abertos
                         .requestMatchers(HttpMethod.GET, "/api/v1/animais", "/api/v1/animais/*",
                                 "/api/v1/animais/*/eventos", "/api/v1/animais/*/foto").permitAll()
+                        // HEAD e o GET sem corpo: quem so quer conferir o cabecalho da foto nao precisa de token
+                        .requestMatchers(HttpMethod.HEAD, "/api/v1/animais/*/foto").permitAll()
                         // qualquer pessoa pode se candidatar a adotar
                         .requestMatchers(HttpMethod.POST, "/api/v1/animais/*/candidaturas").permitAll()
                         .anyRequest().authenticated())

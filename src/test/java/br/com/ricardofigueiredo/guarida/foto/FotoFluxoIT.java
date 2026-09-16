@@ -137,6 +137,23 @@ class FotoFluxoIT {
     }
 
     @Test
+    @DisplayName("cabecalho da foto responde a HEAD sem token, com o mesmo ETag do GET")
+    void cabecalhoSemToken() throws Exception {
+        String token = autenticar();
+        long id = criarAnimal(token, "Manu");
+        mockMvc.perform(enviar(id, imagem("png"), "a.png").header(HttpHeaders.AUTHORIZATION, token));
+
+        String etag = mockMvc.perform(get("/api/v1/animais/" + id + "/foto"))
+                .andExpect(status().isOk()).andReturn().getResponse().getHeader(HttpHeaders.ETAG);
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .head("/api/v1/animais/" + id + "/foto"))
+                .andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .header().string(HttpHeaders.ETAG, etag));
+    }
+
+    @Test
     @DisplayName("link de origem que nao e http e recusado, para nao virar script na ficha publica")
     void recusaOrigemSemHttp() throws Exception {
         String token = autenticar();
